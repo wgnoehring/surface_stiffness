@@ -19,7 +19,99 @@ label_for_component = {0: "xx", 1: "yy", 2: "zz", 3: "yz", 4: "xz", 5: "xy"}
 """Subscript strings for the indices of a vector in Voigt notation as key-value pairs"""
 
 
+def fourier_transform_symmetric_square_block_matrix(matrix, reshape, block_size=3):
+    """Calculate the Fourier transform of a symmetric square block matrix.
+
+    Parameters
+    ----------
+    matrix: numpy.ndarray 
+        Symmetric square two-dimensional array which can be decomposed into blocks.
+    reshape: Reshape
+    block_size: int
+        Size of the square blocks.
+
+    Returns
+    -------
+    matrix_fft: numpy.ndarray
+        Array with the same shape as :code:`matrix` containing the Fourier transformed
+        components of the :code:`block_size` × :code:`block_size` blocks in :code:`matrix`
+    """
+    matrix_fft = np.zeros(matrix.shape, dtype=np.complex_)
+    assert(
+        matrix.ndim == 2 and 
+        matrix.shape[0] == matrix.shape[1] and 
+        matrix.shape[0]%block_size == 0
+    )
+    num_blocks = int(matrix.shape[0] / block_size)
+    print(f"input matrix for FFT is partitioned into {num_blocks}x{num_blocks} blocks of size {block_size}x{block_size}")
+    for block_index in range(num_blocks):
+        sys.stdout.write(f'taking FFT of block column {block_index+1}\r')
+        sys.stdout.flush()
+        # We make no assumption about symmetry of 3x3 blocks
+        for i in range(block_size):
+            for j in range(block_size):
+                row = block_size * block_index + i
+                values_on_grid = reshape.vector_to_grid(matrix[row, j::block_size])
+                values_on_grid = np.roll(values_on_grid, -(block_index // (int(np.sqrt(num_blocks)))), axis=0)
+                values_on_grid = np.roll(values_on_grid, -block_index, axis=1)
+                traffo_on_grid = np.fft.fftshift(np.fft.fft2(values_on_grid))
+                matrix_fft[row, j::block_size] = reshape.grid_to_vector(traffo_on_grid)
+    sys.stdout.write('\n')
+    return matrix_fft
+
+
+def calculate_blockwise_inverse(matrix, block_size=3):
+    """Invert sub-blocks
+
+    Invert blocks of a matrix.
+    
+    Parameters
+    ----------
+    matrix: array-like
+        Matrix which can be decomposed into square blocks of size :code:`block_size` × :code:`block_size`
+    block_size: int
+        Size of the blocks
+
+    Returns
+    -------
+    blockwise_inverse: numpy.ndarray
+        Array with the same shape as :code:`matrix` containing the inverted blocks.
+    """
+    blockwise_inverse = np.zeros_like(matrix)
+    num_blocks = int(blockwise_inverse.shape[0] / block_size)
+    for i in range(num_blocks): 
+        for j in range(num_blocks): 
+            sys.stdout.write(f'inverting block {i*num_blocks+j+1} out of {num_blocks*num_blocks}\r')
+            sys.stdout.flush()
+            slice_i = slice(block_size*i, block_size*(i+1), 1)
+            slice_j = slice(block_size*j, block_size*(j+1), 1)
+            blockwise_inverse[slice_i, slice_j] = np.linalg.inv(matrix[slice_i, slice_j])
+    sys.stdout.write("\n")
+    return blockwise_inverse
+
+
 def extract_local_stiffness(stiff, atom_index, voigt_index, reshape, part="real"):
+    """Extract stiffness for a specific site.
+
+    Parameters
+    ----------
+    stiff: array-like
+       Matrix which for a system of :math:`N\\times{}N` atoms has shape :math:`3N\\times{}3N` and
+       contains :math:`N\\times{}N` :math:`3\\times 3`stifness matrices for pairs of atoms.
+    atom_index: int
+        Index of the central site. Stiffness components with this site as first site are selected.
+    voigt_index: int
+        Index in voigt notation of the component to extract
+        in each selected :math:`3\\times{}3` stiffness matrix
+    reshape: Reshape
+    part: string 
+        'real' for real part or 'imag' for imaginary part of the complex stiffness
+
+    Returns
+    -------
+    components: numpy.ndarray
+        :math:`N\\times{}N` array of stiffness components.
+    """
     block_size = 3
     i, j = matrix_indices_for_voigt_index[voigt_index]
     row = block_size * atom_index + i
