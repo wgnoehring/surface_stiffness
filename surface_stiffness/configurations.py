@@ -38,6 +38,7 @@ class Crystal(ABC):
         [[ 0.71  0.71  0.  ]
          [-0.71  0.71  0.  ]
          [ 0.    0.    1.  ]]
+
         """
         R = np.zeros((3, 3), dtype=float)
         R[0, :] = x / np.linalg.norm(x)
@@ -51,7 +52,7 @@ class FCCSurface001(Crystal):
     """Represents a slab with a (001) surface.
 
     Stores geometric information about a face-centered cubic slab with
-    orientation :math:`x=\[110\]`, :math:`y=\[-110\]`, and :math:`z=\[001\]`.
+    orientation :math:`x=[110]`, :math:`y=[-110]`, and :math:`z=[001]`.
     It is assumed that the slab has the following properties. The
     surface in z-direction is free, while the x- and y-directions are
     periodic. The surface atoms form a simple square lattice. The
@@ -115,8 +116,8 @@ class FCCSurface001(Crystal):
         ----------
         .. [1] https://gitlab.com/ase/ase
         """
-        ase = import_module("ase")
-        atoms = ase.io.read(file, format=format)
+        ase_io = import_module("ase.io")
+        atoms = ase_io.read(file, format=format)
         identifiers = atoms.get_array("id")
         identifiers = np.array(identifiers, int)
         order = np.argsort(identifiers)
