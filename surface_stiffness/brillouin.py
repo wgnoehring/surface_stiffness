@@ -55,6 +55,21 @@ def extract_path(values, x_grid, y_grid, fraction=1.0, true_edge_lengths=None):
         y-coordinates of the points, the third column contains the
         associated values from :code:`values`, and the fourth colum
         is a monotonically increasing coordinate along the path.
+    
+    Examples
+    --------
+    >>> component = np.real(stiffness[:, :, voigt_index])
+    >>> xx, yy = generate_wavevectors(*component.shape)
+    >>> imid = component.shape[0] // 2
+    >>> quadrant = component[imid:, imid:]
+    >>> xx_quadrant = xx[imid:, imid:]
+    >>> yy_quadrant = yy[imid:, imid:]
+    >>> path = extract_path(
+    >>>     np.flipud(quadrant),
+    >>>     xx_quadrant,
+    >>>     np.flipud(yy_quadrant),
+    >>>     fraction=1.0
+    >>> )
     """
     assert x_grid.shape[0] == x_grid.shape[1]
     n = x_grid.shape[0]

@@ -199,6 +199,69 @@ def load_atomistic_stiffness(path, statistics=None, atom_index=0, part="real", m
         return (arr,)
 
 
+def histogram_stiffness(path, voigt_index, part="real", num_bins=100, mask=None):
+    """Generate histograms of stiffness components.
+
+    Parameters
+    ----------
+    path: string 
+        Path to the stiffness matrix
+    voigt_index: int
+        Index in voigt notation of the component of the 
+        :math:`3\\times{}3` stiffness matrix 
+    part: string 
+        'real' for real part or 'imag' for imaginary part of the complex stiffness
+    num_bins: int
+        Number of histogram bins
+    mask: array-like
+        Masks values in the stiffness matrix
+
+    Returns
+    -------
+    histograms: array-like
+        For :math:`N\times N` surface atoms this is a 
+        :math:`N\times N\timesM` array, where :math:`M` is
+        the number of bins
+    bin_edges: array-like
+        For :math:`N\times N` surface atoms this is a 
+        :math:`N\times N\timesM+1` array, where :math:`M` is
+        the number of bins
+    """
+    stiff = np.load(path) * eva3_to_gpa
+    assert stiff.ndim == 2 and stiff.shape[0] == stiff.shape[1]
+    num_atoms_surface = int(stiff.shape[0] / 3)
+    num_atoms_edge = int(np.sqrt(num_atoms_surface))
+    reshape = Reshape(
+        lambda x: np.reshape(x, (-1, num_atoms_edge)), lambda x: np.ravel(x)
+    )
+
+    if mask is not None:
+        zeros = ma.zeros 
+    else:
+        zeros = np.zeros
+    variables = zeros(
+        (num_atoms_edge, num_atoms_edge, num_atoms_surface), dtype=float,
+    )
+    histograms = zeros(
+        (num_atoms_edge, num_atoms_edge, num_bins), dtype=float
+    )
+    bin_edges = zeros(
+        (num_atoms_edge, num_atoms_edge, num_bins+1), dtype=float
+    )
+    if mask is not None:
+        variables.mask = zeros(variables.shape)
+
+    for atom_index in range(num_atoms_surface):
+        variables[:, :, atom_index] = extract_local_stiffness(
+            stiff, atom_index, voigt_index, reshape, part=part
+        )
+        if mask is not None:
+            variables.mask[:, :, atom_index] = mask[atom_index]
+    for (i, j) in np.ndindex((num_atoms_edge, num_atoms_edge)):
+        histograms[i, j, :], bin_edges[i, j, :] = np.histogram(variables[i, j, :], bins=num_bins, density=True)
+    return histograms, bin_edges
+
+
 class Reshape(object):
     """Convert array row to grid"""
 
