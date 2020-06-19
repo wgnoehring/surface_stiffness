@@ -5,6 +5,7 @@ from abc import ABC
 from dataclasses import dataclass, field
 import numpy as np
 from .materials import Material
+from .matrix import OrderedVectorToSquareGrid
 from importlib import import_module
 
 #TODO: method to generate Lammps data files
@@ -91,6 +92,7 @@ class FCCSurface001(Crystal):
 
     def __post_init__(self):
         self.num_atoms_surface = self.num_atoms_edge**2
+        self.reshape = OrderedVectorToSquareGrid(self.num_atoms_edge)
 
     def calculate_area_per_atom(self):
         """Calculate the mean area per atom from the true edge length."""

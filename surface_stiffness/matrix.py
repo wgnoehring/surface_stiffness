@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Functions for working with matrices."""
+from abc import ABC
 import numpy as np
 from numpy import ma
-from .units import eva3_to_gpa, gpa_to_eva3
 
 matrix_indices_for_voigt_index = {
     0: (0, 0),
@@ -97,7 +97,7 @@ def extract_local_stiffness(stiff, atom_index, voigt_index, reshape, part="real"
     ----------
     stiff: array-like
        Matrix which for a system of :math:`N\\times{}N` atoms has shape :math:`3N\\times{}3N` and
-       contains :math:`N\\times{}N` :math:`3\\times 3`stifness matrices for pairs of atoms.
+       contains :math:`N\\times{}N` :math:`3\\times 3`stiffness matrices for pairs of atoms.
     atom_index: int
         Index of the central site. Stiffness components with this site as first site are selected.
     voigt_index: int
@@ -124,15 +124,17 @@ def extract_local_stiffness(stiff, atom_index, voigt_index, reshape, part="real"
         raise NotImplementedError
 
 
-def load_atomistic_stiffness(path, statistics=None, atom_index=0, part="real", mask=None):
+def load_atomistic_stiffness(stiff, reshape, statistics=None, atom_index=0, part="real", mask=None):
     """Load atomistic stiffness from a file 
 
     The result still needs to be divided by the area per atom.
 
     Parameters
     ----------
-    path: string 
-        Path to the stiffness matrix
+    stiff: array-like
+       Matrix which for a system of :math:`N\\times{}N` atoms has shape :math:`3N\\times{}3N` and
+       contains :math:`N\\times{}N` :math:`3\\times 3`stiffness matrices for pairs of atoms.
+    reshape: Reshape
     statistics: list of numpy statistics routines
         The routines will be applied to the (N, N, N*N) array which
         contains the (N, N) stiffness matrices of the N*N surface atoms,
@@ -155,43 +157,35 @@ def load_atomistic_stiffness(path, statistics=None, atom_index=0, part="real", m
         the tuple contains only the array for atom index atom_index.
 
     """
-    stiff = np.load(path) * eva3_to_gpa
     assert stiff.ndim == 2 and stiff.shape[0] == stiff.shape[1]
-    num_atoms_surface = int(stiff.shape[0] / 3)
-    num_atoms_edge = int(np.sqrt(num_atoms_surface))
-    reshape = Reshape(
-        lambda x: np.reshape(x, (-1, num_atoms_edge)), lambda x: np.ravel(x)
-    )
     if mask is not None:
         zeros = ma.zeros 
     else:
         zeros = np.zeros
+    num_atoms = reshape.grid_shape[0] * reshape.grid_shape[1]
     if statistics is not None:
         output = []
         for op in statistics:
-            print(f"calculating {op.__name__} of data in {path}")
-            stat = zeros((num_atoms_edge, num_atoms_edge, 6), dtype=float)
+            print(f"calculating {op.__name__}")
+            stat = zeros((reshape.grid_shape[0], reshape.grid_shape[1], 6))
             for voigt_index in range(6):
                 variables = zeros(
-                    (num_atoms_edge, num_atoms_edge, num_atoms_surface), dtype=float,
+                    (reshape.grid_shape[0], reshape.grid_shape[1], num_atoms)
                 )
                 if mask is not None:
                     variables.mask = zeros(variables.shape)
-                for atom_index in range(num_atoms_surface):
+                for atom_index in range(num_atoms):
                     variables[:, :, atom_index] = extract_local_stiffness(
                         stiff, atom_index, voigt_index, reshape, part=part
                     )
                     if mask is not None:
                         variables.mask[:, :, atom_index] = mask[atom_index]
-                #if mask is not None:
-                #    with np.printoptions(linewidth=220):
-                #        print(variables[0, 0, :20].mask)
                 stat[:, :, voigt_index] = op(variables, axis=2)
             output.append(stat)
         return tuple(output)
     else:
-        print(f"extracting data for atom index {atom_index} from {path}")
-        arr = zeros((num_atoms_edge, num_atoms_edge, 6), dtype=float)
+        print(f"extracting data for atom index {atom_index}")
+        arr = zeros((reshape.grid_shape[0], reshape.grid_shape[1], 6), dtype=float)
         for voigt_index in range(6):
             arr[:, :, voigt_index] = extract_local_stiffness(
                 stiff, atom_index, voigt_index, reshape, part=part
@@ -199,13 +193,14 @@ def load_atomistic_stiffness(path, statistics=None, atom_index=0, part="real", m
         return (arr,)
 
 
-def histogram_stiffness(path, voigt_index, part="real", num_bins=100, mask=None):
+def histogram_stiffness(stiff, reshape, voigt_index, part="real", num_bins=100, mask=None):
     """Generate histograms of stiffness components.
 
     Parameters
     ----------
-    path: string 
-        Path to the stiffness matrix
+    stiff: array-like
+       Matrix which for a system of :math:`N\\times{}N` atoms has shape :math:`3N\\times{}3N` and
+       contains :math:`N\\times{}N` :math:`3\\times 3`stiffness matrices for pairs of atoms.
     voigt_index: int
         Index in voigt notation of the component of the 
         :math:`3\\times{}3` stiffness matrix 
@@ -227,44 +222,55 @@ def histogram_stiffness(path, voigt_index, part="real", num_bins=100, mask=None)
         :math:`N\times N\timesM+1` array, where :math:`M` is
         the number of bins
     """
-    stiff = np.load(path) * eva3_to_gpa
     assert stiff.ndim == 2 and stiff.shape[0] == stiff.shape[1]
-    num_atoms_surface = int(stiff.shape[0] / 3)
-    num_atoms_edge = int(np.sqrt(num_atoms_surface))
-    reshape = Reshape(
-        lambda x: np.reshape(x, (-1, num_atoms_edge)), lambda x: np.ravel(x)
-    )
-
     if mask is not None:
         zeros = ma.zeros 
     else:
         zeros = np.zeros
+    num_atoms = reshape.grid_shape[0] * reshape.grid_shape[1]
     variables = zeros(
-        (num_atoms_edge, num_atoms_edge, num_atoms_surface), dtype=float,
+        (reshape.grid_shape[0], reshape.grid_shape[1], num_atoms), dtype=float,
     )
     histograms = zeros(
-        (num_atoms_edge, num_atoms_edge, num_bins), dtype=float
+        (reshape.grid_shape[0], reshape.grid_shape[1], num_bins), dtype=float
     )
     bin_edges = zeros(
-        (num_atoms_edge, num_atoms_edge, num_bins+1), dtype=float
+        (reshape.grid_shape[0], reshape.grid_shape[1], num_bins+1), dtype=float
     )
     if mask is not None:
         variables.mask = zeros(variables.shape)
 
-    for atom_index in range(num_atoms_surface):
+    for atom_index in range(num_atoms):
         variables[:, :, atom_index] = extract_local_stiffness(
             stiff, atom_index, voigt_index, reshape, part=part
         )
         if mask is not None:
             variables.mask[:, :, atom_index] = mask[atom_index]
-    for (i, j) in np.ndindex((num_atoms_edge, num_atoms_edge)):
-        histograms[i, j, :], bin_edges[i, j, :] = np.histogram(variables[i, j, :], bins=num_bins, density=True)
+    for (i, j) in np.ndindex((reshape.grid_shape[0], reshape.grid_shape[1])):
+        histograms[i, j, :], bin_edges[i, j, :] = np.histogram(
+            variables[i, j, :], bins=num_bins, density=True
+        )
     return histograms, bin_edges
 
 
-class Reshape(object):
-    """Convert array row to grid"""
+class Reshape(ABC):
+    """Reshape a vector into a grid."""
 
-    def __init__(self, vector_to_grid, grid_to_vector):
-        self.vector_to_grid = vector_to_grid
-        self.grid_to_vector = grid_to_vector
+    def vector_to_grid(self):
+        raise NotImplementedError
+
+    def grid_to_vector(self):
+        raise NotImplementedError
+
+
+class OrderedVectorToSquareGrid(Reshape):
+
+    def __init__(self, edge_length):
+        """Transform between an ordered vector and a square grid."""
+        self.grid_shape = (edge_length, edge_length)
+
+    def vector_to_grid(self, x):
+        return np.reshape(x, (-1, self.grid_shape[1]))
+
+    def grid_to_vector(self, x):
+        lambda x: np.ravel(x)
