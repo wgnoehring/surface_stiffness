@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Functions for working with matrices."""
+import sys
 from abc import ABC
 import numpy as np
 from numpy import ma
@@ -273,4 +274,4 @@ class OrderedVectorToSquareGrid(Reshape):
         return np.reshape(x, (-1, self.grid_shape[1]))
 
     def grid_to_vector(self, x):
-        lambda x: np.ravel(x)
+        return np.ravel(x)
