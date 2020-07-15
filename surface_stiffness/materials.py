@@ -75,3 +75,21 @@ random_FeNiCr_stiffened = FCCMaterial(
     C12=157.03243264, 
     C44=134.89972062
 )
+
+average_FeNiCr_Bonny_2011 = FCCMaterial(
+    elements=("A",), concentrations=(1.0,),  
+    source="""\
+---
+description: EAM potential for alloys of Fe, Ni and Cr, with average-alloy 
+  potential for the equicomposition alloy with 33% Fe, 33% Ni, and 33% Cr.
+reference: "G. Bonny, D. Terentyev, R.C. Pasianot, S. Poncé, and A. Bakaev (2011), 
+  'Interatomic potential to study plasticity in stainless steels: the FeNiCr 
+  model alloy', Modelling and Simulation in Materials Science and Engineering, 
+  19(8), 085008. DOI: 10.1088/0965-0393/19/8/085008"
+url: "https://www.ctcms.nist.gov/potentials/Download/2011--Bonny-G-Terentyev-D-Pasianot-R-C-et-al--Fe-Ni-Cr/1/FeNiCr.eam.alloy"
+""",
+    lattice_parameter=3.5218186155137734, 
+    C11=246.610145262896367, 
+    C12=158.121884686608013, 
+    C44=138.525095411635675,
+)
