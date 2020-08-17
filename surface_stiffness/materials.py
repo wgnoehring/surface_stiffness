@@ -110,3 +110,20 @@ url: "https://www.ctcms.nist.gov/potentials/Download/2011--Bonny-G-Terentyev-D-P
     C12=157.44603732988062,
     C44=134.9885847097457,
 )
+
+FeNiCr_Bonny_2011_Ni = FCCMaterial(
+    elements=("Ni", ), concentrations=(1.0,),  
+    source="""\
+---
+description: EAM potential for alloys of Fe, Ni and Cr. The data here is for pure Ni.
+reference: "G. Bonny, D. Terentyev, R.C. Pasianot, S. Poncé, and A. Bakaev (2011), 
+  'Interatomic potential to study plasticity in stainless steels: the FeNiCr 
+  model alloy', Modelling and Simulation in Materials Science and Engineering, 
+  19(8), 085008. DOI: 10.1088/0965-0393/19/8/085008"
+url: "https://www.ctcms.nist.gov/potentials/Download/2011--Bonny-G-Terentyev-D-Pasianot-R-C-et-al--Fe-Ni-Cr/1/FeNiCr.eam.alloy". 
+""",
+    lattice_parameter=3.519294473157436,
+    C11=246.929958899558983,
+    C12=147.071946812490665,
+    C44=125.030567589943999,
+)
