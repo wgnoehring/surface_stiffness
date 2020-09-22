@@ -33,6 +33,47 @@ label_for_component = {0: "xx", 1: "yy", 2: "zz", 3: "yz", 4: "xz", 5: "xy"}
 """Subscript strings for the indices of a vector in Voigt notation as key-value pairs"""
 
 
+def convert_matrix_to_voigt_vector(matrix):
+    """Convert a 3×3 matrix into a Voigt vector.
+
+    Parameters
+    ----------
+    matrix: array-like
+        Symmetric 3×3 matrix
+
+    Returns
+    -------
+    vector: numpy.ndarray
+        Vector with 6 elements
+    """
+    vector = np.zeros(6, dtype=matrix.dtype)
+    for i, j in zip(*np.triu_indices(3)):
+        voigt_index = voigt_indices_for_matrix_index[(i, j)]
+        vector[voigt_index] = matrix[i, j]
+    return vector
+
+
+def convert_voigt_vector_to_matrix(vector):
+    """Convert a Voigt vector into a 3×3 matrix.
+
+
+    Parameters
+    ----------
+    vector: numpy.ndarray
+        Vector with 6 elements
+
+    Returns
+    -------
+    matrix: array-like
+        Symmetric 3×3 matrix
+    """
+    matrix = np.zeros((3, 3), dtype=vector.dtype)
+    for i, j in np.ndindex(3, 3):
+        voigt_index = voigt_indices_for_matrix_index[(i, j)]
+        matrix[i, j] = vector[voigt_index]
+    return matrix
+
+
 def fourier_transform_symmetric_square_block_matrix(matrix, reshape, block_size=3):
     """Calculate the Fourier transform of a symmetric square block matrix.
 
@@ -104,7 +145,7 @@ def calculate_blockwise_inverse(matrix, block_size=3):
     return blockwise_inverse
 
 
-def extract_local_stiffness(stiff, atom_index, voigt_index, reshape, part="real"):
+def extract_local_stiffness(stiff, atom_index, indices, reshape, part="real", indexing="voigt"):
     """Extract stiffness for a specific site.
 
     Parameters
@@ -114,13 +155,18 @@ def extract_local_stiffness(stiff, atom_index, voigt_index, reshape, part="real"
        contains :math:`N\\times{}N` :math:`3\\times 3`stiffness matrices for pairs of atoms.
     atom_index: int
         Index of the central site. Stiffness components with this site as first site are selected.
-    voigt_index: int
-        Index in voigt notation of the component to extract
-        in each selected :math:`3\\times{}3` stiffness matrix
+    indices: tuple or int
+        Matrix indices or equivalent index in Voigt notation of the component to extract in each
+        selected :math:`3\\times{}3` stiffness matrix, see parameter :code:`indexing`.
     reshape: Reshape
     part: string 
         'real' for real part or 'imag' for imaginary part of the complex stiffness, 
         otherwise 'both'
+    indexing: string
+        :code:`indexing='voigt'` means that :code:`indices` must be :code:`int` and is 
+        interpreted as the Voigt index of the matrix element. :code:`indexing='matrix'` 
+        means that :code:`indices` is a tuple containing the row and column indices of 
+        the component to extract.
 
     Returns
     -------
@@ -128,7 +174,12 @@ def extract_local_stiffness(stiff, atom_index, voigt_index, reshape, part="real"
         :math:`N\\times{}N` array of stiffness components.
     """
     block_size = 3
-    i, j = matrix_indices_for_voigt_index[voigt_index]
+    if indexing == "voigt":
+        i, j = matrix_indices_for_voigt_index[indices]
+    elif indexing == "matrix": 
+        i, j = indices
+    else:
+        raise ValueError("unknown indexing scheme")
     row = block_size * atom_index + i
     row = stiff[row, j::block_size]
     if part == "real":
@@ -141,7 +192,7 @@ def extract_local_stiffness(stiff, atom_index, voigt_index, reshape, part="real"
         raise ValueError
 
 
-def load_atomistic_stiffness(stiff, reshape, statistics=None, atom_index=0, part="real", mask=None):
+def load_atomistic_stiffness(stiff, reshape, statistics=None, atom_index=0, part="real", mask=None, indexing="voigt"):
     """Load atomistic stiffness from a file 
 
     The result still needs to be divided by the area per atom.
@@ -164,14 +215,22 @@ def load_atomistic_stiffness(stiff, reshape, statistics=None, atom_index=0, part
         i.e. the stiffness for this atom as central atom.
     part: "real", or "imag", or "both"
         Whether to extract the real or imaginary parts, or both
+    indexing: string
+        "voigt" means that only the six components of Voigt notation will be
+        loaded, which is sufficient if the stiffness matrices are symmetric.
+        "matrix" means that all nine stiffness components will be loaded.
 
     Returns
     -------
-    arr: tuple of arrays of shape (N, N, 6)
+    arr: tuple of arrays of shape (N, N, P)
         N is the number of atoms along the edge of the configuration.
         If Ns statistics were requested, then the tuple contains the
         resulting Ns arrays. If no statistics were requested, then
         the tuple contains only the array for atom index atom_index.
+        If :code:`indexing='voigt'`, then the (statistics of the) 
+        upper triangular matrix are returned in Voigt notation and
+        :code:`P=6`. If :code:`indexing='matrix'`, then 
+        (statistics of) all elements are returned.
 
     """
     assert stiff.ndim == 2 and stiff.shape[0] == stiff.shape[1]
@@ -185,13 +244,22 @@ def load_atomistic_stiffness(stiff, reshape, statistics=None, atom_index=0, part
     )
     required_dtype = tmp.dtype
 
+    if indexing == "voigt": 
+        indices = tuple(range(6))
+        num_indices = 6
+    elif indexing == "matrix":
+        indices = np.ndindex(3, 3)
+        num_indices = 9
+    else: 
+        raise ValueError(f"indexing {indexing} not supported")
+
     num_atoms = reshape.grid_shape[0] * reshape.grid_shape[1]
     if statistics is not None:
         output = []
         for op in statistics:
             print(f"calculating {op.__name__}")
-            stat = zeros((reshape.grid_shape[0], reshape.grid_shape[1], 6), dtype=required_dtype)
-            for voigt_index in range(6):
+            stat = zeros((reshape.grid_shape[0], reshape.grid_shape[1], num_indices), dtype=required_dtype)
+            for ii in range(num_indices):
                 variables = zeros(
                     (reshape.grid_shape[0], reshape.grid_shape[1], num_atoms),
                     dtype=required_dtype
@@ -200,24 +268,24 @@ def load_atomistic_stiffness(stiff, reshape, statistics=None, atom_index=0, part
                     variables.mask = zeros(variables.shape)
                 for atom_index in range(num_atoms):
                     variables[:, :, atom_index] = extract_local_stiffness(
-                        stiff, atom_index, voigt_index, reshape, part=part
+                        stiff, atom_index, indices[ii], reshape, part=part, indexing=indexing
                     )
                     if mask is not None:
                         variables.mask[:, :, atom_index] = mask[atom_index]
-                stat[:, :, voigt_index] = op(variables, axis=2)
+                stat[:, :, ii] = op(variables, axis=2)
             output.append(stat)
         return tuple(output)
     else:
         print(f"extracting data for atom index {atom_index}")
         arr = zeros((reshape.grid_shape[0], reshape.grid_shape[1], 6), dtype=float)
-        for voigt_index in range(6):
-            arr[:, :, voigt_index] = extract_local_stiffness(
-                stiff, atom_index, voigt_index, reshape, part=part
+        for ii in range(num_indices):
+            arr[:, :, ii] = extract_local_stiffness(
+                stiff, atom_index, indices[ii], reshape, part=part, indexing=indexing
             )
         return (arr,)
 
 
-def histogram_stiffness(stiff, reshape, voigt_index, part="real", num_bins=100, mask=None):
+def histogram_stiffness(stiff, reshape, indices, part="real", num_bins=100, mask=None, indexing="voigt"):
     """Generate histograms of stiffness components.
 
     Parameters
@@ -225,15 +293,24 @@ def histogram_stiffness(stiff, reshape, voigt_index, part="real", num_bins=100, 
     stiff: array-like
        Matrix which for a system of :math:`N\\times{}N` atoms has shape :math:`3N\\times{}3N` and
        contains :math:`N\\times{}N` :math:`3\\times 3`stiffness matrices for pairs of atoms.
-    voigt_index: int
+    indices: int
         Index in voigt notation of the component of the 
         :math:`3\\times{}3` stiffness matrix 
+    indices: tuple or int
+        Matrix indices or equivalent index in Voigt notation of the component of the 
+        :math:`3\\times{}3` stiffness matrices that should be histogrammed. 
+        See parameter :code:`indexing`
     part: string 
         'real' for real part or 'imag' for imaginary part of the complex stiffness
     num_bins: int
         Number of histogram bins
     mask: array-like
         Masks values in the stiffness matrix
+    indexing: string
+        :code:`indexing='voigt'` means that :code:`indices` must be :code:`int` and
+        is interpreted as the Voigt index of the matrix element. :code:`indexing='matrix'`
+        means that :code:`indices` is a tuple containing the row and column indices of the 
+        component to histogram.
 
     Returns
     -------
@@ -266,7 +343,7 @@ def histogram_stiffness(stiff, reshape, voigt_index, part="real", num_bins=100, 
 
     for atom_index in range(num_atoms):
         variables[:, :, atom_index] = extract_local_stiffness(
-            stiff, atom_index, voigt_index, reshape, part=part
+            stiff, atom_index, indices, reshape, part=part, indexing=indexing
         )
         if mask is not None:
             variables.mask[:, :, atom_index] = mask[atom_index]
@@ -275,6 +352,64 @@ def histogram_stiffness(stiff, reshape, voigt_index, part="real", num_bins=100, 
             variables[i, j, :], bins=num_bins, density=True
         )
     return histograms, bin_edges
+
+
+def invert_grid_of_flattened_matrices(array, epsilon=1e-13):
+    """Invert a grid of flattened matrices
+
+    Given a :math:`M×N×P` array, interpret the values along the 
+    third dimension as the elements of a :math:`3×3` matrix. 
+    Invert the matrices and return the inverses as 
+    :math:`M×N×P` array.
+
+    Parameters
+    ----------
+    array: array-like
+        M×N×P array of inverses. If :code:`P=6`, then interpret 
+        :code:`array[i, j, :]` as the Voigt vector representation
+        of a symmetric matrix. If :code:`P=9`, then assume that 
+        :code:`array[i, j, :]` is the flattened array obtained by 
+        :code:`numpy.ravel`.
+    epsilon: float
+        Matrices whose 2-norm is less or equal than epsilon are
+        assumed to be zero and not inverted. The inverse is zero.
+
+    Returns 
+    -------
+    inverse: numpy.ndarray
+        M×N×P array of inverses
+
+    """
+    inverse = np.zeros_like(array)
+    if array.shape[2] == 6:
+        invert = lambda x: invert_voigt_representation(x)
+    elif array.shape[2] == 9:
+        invert = lambda x: np.linalg.inv(x.reshape(3, 3))
+    else:
+        raise ValueError(f"invalid number of elements {array.shape[2]}")
+    for i, j in np.ndindex(*array.shape[:2]):
+        if np.linalg.norm(array[i, j, :]) > epsilon:
+            inverse[i, j, :]  = invert(array[i, j, :])
+    return inverse
+
+
+def invert_voigt_representation(vector):
+    """Invert the symmetric matrix corresponding to a Voigt vector.
+
+    Parameters
+    ----------
+    vector: array-like
+        Vector with six elements representing a matrix in Voigt notation.
+
+    Returns 
+    -------
+    inverse: numpy.ndarray
+        Vector with six elements representing the inverse matrix.
+
+    """ 
+    matrix = convert_voigt_vector_to_matrix(vector)
+    inverse = np.linalg.inv(matrix)
+    return convert_matrix_to_voigt_vector(inverse)
 
 
 class Reshape(ABC):
