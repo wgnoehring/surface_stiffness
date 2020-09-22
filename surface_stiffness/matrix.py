@@ -106,7 +106,8 @@ def extract_local_stiffness(stiff, atom_index, voigt_index, reshape, part="real"
         in each selected :math:`3\\times{}3` stiffness matrix
     reshape: Reshape
     part: string 
-        'real' for real part or 'imag' for imaginary part of the complex stiffness
+        'real' for real part or 'imag' for imaginary part of the complex stiffness, 
+        otherwise 'both'
 
     Returns
     -------
@@ -121,8 +122,10 @@ def extract_local_stiffness(stiff, atom_index, voigt_index, reshape, part="real"
         return np.real(reshape.vector_to_grid(row))
     elif part == "imag":
         return np.imag(reshape.vector_to_grid(row))
+    elif part == "both":
+        return reshape.vector_to_grid(row)
     else:
-        raise NotImplementedError
+        raise ValueError
 
 
 def load_atomistic_stiffness(stiff, reshape, statistics=None, atom_index=0, part="real", mask=None):
@@ -146,8 +149,8 @@ def load_atomistic_stiffness(stiff, reshape, statistics=None, atom_index=0, part
         If statistics is None, then only the (N, N, 6) components
         for the atom with array index atom_index will be extracted,
         i.e. the stiffness for this atom as central atom.
-    part: "real" or "imag"
-        Whether to extract the real or imaginary parts
+    part: "real", or "imag", or "both"
+        Whether to extract the real or imaginary parts, or both
 
     Returns
     -------
@@ -163,15 +166,22 @@ def load_atomistic_stiffness(stiff, reshape, statistics=None, atom_index=0, part
         zeros = ma.zeros 
     else:
         zeros = np.zeros
+    # get required dtype
+    tmp = extract_local_stiffness(
+        stiff, 0, 0, reshape, part=part
+    )
+    required_dtype = tmp.dtype
+
     num_atoms = reshape.grid_shape[0] * reshape.grid_shape[1]
     if statistics is not None:
         output = []
         for op in statistics:
             print(f"calculating {op.__name__}")
-            stat = zeros((reshape.grid_shape[0], reshape.grid_shape[1], 6))
+            stat = zeros((reshape.grid_shape[0], reshape.grid_shape[1], 6), dtype=required_dtype)
             for voigt_index in range(6):
                 variables = zeros(
-                    (reshape.grid_shape[0], reshape.grid_shape[1], num_atoms)
+                    (reshape.grid_shape[0], reshape.grid_shape[1], num_atoms),
+                    dtype=required_dtype
                 )
                 if mask is not None:
                     variables.mask = zeros(variables.shape)
