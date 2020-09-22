@@ -14,6 +14,19 @@ matrix_indices_for_voigt_index = {
     4: (0, 2),
     5: (0, 1),
 }
+"""Matrix indices corresponding to a given Voigt index as key-value pairs."""
+
+voigt_index_for_matrix_indices = {
+    (0, 0) : 0,
+    (1, 1) : 1,
+    (2, 2) : 2,
+    (1, 2) : 3,
+    (2, 1) : 3,
+    (0, 2) : 4,
+    (2, 0) : 4,
+    (0, 1) : 5,
+    (1, 0) : 5,
+}
 """Indices in Voigt notation for matrix indices as key-value pairs."""
 
 label_for_component = {0: "xx", 1: "yy", 2: "zz", 3: "yz", 4: "xz", 5: "xy"}
