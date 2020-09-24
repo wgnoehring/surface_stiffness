@@ -248,7 +248,7 @@ def load_atomistic_stiffness(stiff, reshape, statistics=None, atom_index=0, part
         indices = tuple(range(6))
         num_indices = 6
     elif indexing == "matrix":
-        indices = np.ndindex(3, 3)
+        indices = tuple(np.ndindex(3, 3))
         num_indices = 9
     else: 
         raise ValueError(f"indexing {indexing} not supported")
@@ -277,7 +277,7 @@ def load_atomistic_stiffness(stiff, reshape, statistics=None, atom_index=0, part
         return tuple(output)
     else:
         print(f"extracting data for atom index {atom_index}")
-        arr = zeros((reshape.grid_shape[0], reshape.grid_shape[1], 6), dtype=float)
+        arr = zeros((reshape.grid_shape[0], reshape.grid_shape[1], num_indices), dtype=required_dtype)
         for ii in range(num_indices):
             arr[:, :, ii] = extract_local_stiffness(
                 stiff, atom_index, indices[ii], reshape, part=part, indexing=indexing
@@ -384,7 +384,7 @@ def invert_grid_of_flattened_matrices(array, epsilon=1e-13):
     if array.shape[2] == 6:
         invert = lambda x: invert_voigt_representation(x)
     elif array.shape[2] == 9:
-        invert = lambda x: np.linalg.inv(x.reshape(3, 3))
+        invert = lambda x: np.linalg.inv(x.reshape(3, 3)).ravel()
     else:
         raise ValueError(f"invalid number of elements {array.shape[2]}")
     for i, j in np.ndindex(*array.shape[:2]):
