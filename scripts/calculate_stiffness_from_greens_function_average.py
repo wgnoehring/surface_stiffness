@@ -219,8 +219,8 @@ def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
             mask=mask,
         )
         fluctuation = std_real + 1.0j * std_imag
-        upper = mean_both + fluctuation
-        lower = mean_both - fluctuation
+        upper = mean_both + num_stddev * fluctuation
+        lower = mean_both - num_stddev * fluctuation
         upper_stiff = invert_grid_of_flattened_matrices(upper)
         lower_stiff = invert_grid_of_flattened_matrices(lower)
     return mean_stiff, upper_stiff, lower_stiff
