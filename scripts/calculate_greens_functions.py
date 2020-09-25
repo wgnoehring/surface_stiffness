@@ -21,7 +21,7 @@ def main():
     )
     args = parser.parse_args()
     sparse_hessian = load_npz(args.ath_to_hessian.as_posix())
-    inverse, dense calculate_surface_greens_functions(sparse_hessian, num_atoms_per_plane, num_free_planes)
+    inverse, dense = calculate_surface_greens_functions(sparse_hessian, num_atoms_per_plane, num_free_planes)
     path_inverse = Path(
         args.path_to_hessian.parent,
         f"block_minimized_hessian_matrix_inverse_dense_upper{num_atoms_per_plane}x3x{num_atoms_per_plane}x3_block.npy",
