@@ -20,7 +20,10 @@ __email__ = "wolfram.noehring@imtek.uni-freiburg.de"
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "greens_functions", help="Numpy array containing the Green's functions"
+        "greens_functions", help="Numpy array containing the Green's functions. Alternatively: scipy sparse bsr matrix"
+    )
+    parser.add_argument(
+        "-f", "--input_format", choices=("numpy",  "sparse"), default="numpy", help="Input format: 'numpy' if the file should be loaded with numpy.load, 'sparse' if it should be loaded with scipy.sparse.load_npz"
     )
     parser.add_argument(
         "output",
@@ -35,7 +38,13 @@ def main():
         help="Size of blocks in the Green's function matrix",
     )
     args = parser.parse_args()
-    greens_functions = np.load(args.greens_functions)
+    if args.input_format == "numpy":
+        greens_functions = np.load(args.greens_functions)
+    elif args.input_format == "sparse":
+        sparse = load_npz(args.greens_functions)
+        greens_functions = sparse.todense()
+    else:
+        raise ValueError
     # Green's functions calculated with PetSC inversion
     # may be padded with zeros along the first dimension
     num_cols = greens_functions.shape[1]
@@ -49,7 +58,7 @@ def main():
         None, configurations.FCCSurface001(num_atoms_edge, 1, 1.0),  #
     )
     ft_greens_functions = fourier_transform_symmetric_square_block_matrix(
-        greens_functions, average_config.crystal.reshape
+        greens_functions, dummy_config.crystal.reshape
     )
     np.save(args.output, ft_greens_functions)
 
