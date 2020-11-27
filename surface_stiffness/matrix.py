@@ -257,7 +257,7 @@ def load_atomistic_stiffness(stiff, reshape, statistics=None, atom_index=0, part
     if statistics is not None:
         output = []
         for op in statistics:
-            print(f"calculating {op.__name__}")
+            #print(f"calculating {op.__name__}")
             stat = zeros((reshape.grid_shape[0], reshape.grid_shape[1], num_indices), dtype=required_dtype)
             for ii in range(num_indices):
                 variables = zeros(
@@ -412,7 +412,7 @@ def invert_voigt_representation(vector):
     return convert_matrix_to_voigt_vector(inverse)
 
 
-def bootstrap_block_matrix(matrix, block_size=3, num_samples=100, rng=None):
+def bootstrap_block_matrix(matrix, block_size=3, num_samples=100, rng=None, roll=False):
     """Resample a block matrix.
 
     This function is useful for performing a bootstrap.
@@ -421,11 +421,27 @@ def bootstrap_block_matrix(matrix, block_size=3, num_samples=100, rng=None):
         rng = np.random.default_rng()
     num_blocks = matrix.shape[0] // block_size
     row_tiling = np.tile(np.arange(block_size, dtype=int), num_blocks)
-    samples = np.zeros((num_samples, matrix.shape[0], matrix.shape[1]), dtype=matrix.dtype)
+    samples = np.zeros(
+        (matrix.shape[0], matrix.shape[1], num_samples), 
+        dtype=matrix.dtype
+    )
+    original_blocks = np.arange(num_blocks)
+    # may need to roll left/right so blocks ij with i==j occupy diagonal
     for i in range(num_samples):
-        sampled_blocks = rng.integers(num_blocks, size=num_blocks)
+        sampled_blocks = block_size * rng.integers(
+            low=0, high=num_blocks, size=num_blocks
+        )
         rows = np.repeat(sampled_blocks, 3, axis=0) + row_tiling
-        samples[i, :, :] = matrix[rows, :]
+        samples[:, :, i] = matrix[rows, :]
+        if roll:
+            required_left_rolls = np.repeat(
+                original_blocks - sampled_blocks, 3, axis=0
+            )
+            for j in range(samples.shape[0]):
+                samples[j, :, i] = np.roll(
+                    samples[j, :, i], 
+                    shift=required_left_rolls[j]
+                )
     return samples
 
 

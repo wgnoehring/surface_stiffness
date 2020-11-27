@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Functions for calculating surface stiffnesses."""
 import numpy as np
-from matrix import  load_atomistic_stiffness, invert_grid_of_flattened_matrices
+from .matrix import  load_atomistic_stiffness, invert_grid_of_flattened_matrices
 
 
 def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
