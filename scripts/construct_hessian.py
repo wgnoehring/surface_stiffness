@@ -28,6 +28,7 @@ def main():
         default="block_minimized_hessian_matrix.npz",
         help="Output file containing the Hessian in BSR format",
     )
+    args = parser.parse_args()
     atoms = io.read(args.configuration, format="xyz")
     calculator = calculators.eam.calculator.EAM(args.potential)
     atoms.set_calculator(calculator)
