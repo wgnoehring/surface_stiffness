@@ -10,8 +10,8 @@ from surface_stiffness.matrix import (
     calculate_blockwise_inverse,
     load_atomistic_stiffness,
     invert_grid_of_flattened_matrices,
-    calculate_stiffness
 )
+from surface_stiffness.stiffness import calculate_stiffness
 
 def main():
     args = parse_command_line()
