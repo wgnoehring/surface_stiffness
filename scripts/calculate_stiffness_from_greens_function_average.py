@@ -130,6 +130,14 @@ def parse_command_line():
             )
         )
     )
+    none = subparsers.add_parser(
+        "none",
+        help=(dedent("""\
+            Calculate no confidence intervals
+            """
+            )
+        )
+    )
     stddev = subparsers.add_parser(
         "stddev",
         help=(dedent("""\
