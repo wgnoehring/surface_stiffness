@@ -100,8 +100,8 @@ def fourier_transform_symmetric_square_block_matrix(matrix, reshape, block_size=
     num_blocks = int(matrix.shape[0] / block_size)
     print(f"input matrix for FFT is partitioned into {num_blocks}x{num_blocks} blocks of size {block_size}x{block_size}")
     for block_index in range(num_blocks):
-        sys.stdout.write(f'taking FFT of block column {block_index+1}\r')
-        sys.stdout.flush()
+        #sys.stdout.write(f'taking FFT of block column {block_index+1}\r')
+        #sys.stdout.flush()
         # We make no assumption about symmetry of 3x3 blocks
         for i in range(block_size):
             for j in range(block_size):
