@@ -50,7 +50,7 @@ def main():
     num_cols = greens_functions.shape[1]
     greens_functions = greens_functions[:num_cols, :]
     # Determine the number of atoms along the edge of the configuration
-    num_atoms_edge = int(greens_functions.shape[0] / args.block_size)
+    num_atoms_edge = int(np.sqrt(greens_functions.shape[0] / args.block_size))
     # Create a dummy material to access the reshape method of
     # configurations.crystal. Height and side length of the
     # configuration do not matter here. The material does not matter.
