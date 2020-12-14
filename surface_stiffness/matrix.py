@@ -136,8 +136,8 @@ def calculate_blockwise_inverse(matrix, block_size=3):
     num_blocks = int(blockwise_inverse.shape[0] / block_size)
     for i in range(num_blocks): 
         for j in range(num_blocks): 
-            sys.stdout.write(f'inverting block {i*num_blocks+j+1} out of {num_blocks*num_blocks}\r')
-            sys.stdout.flush()
+            #sys.stdout.write(f'inverting block {i*num_blocks+j+1} out of {num_blocks*num_blocks}\r')
+            #sys.stdout.flush()
             slice_i = slice(block_size*i, block_size*(i+1), 1)
             slice_j = slice(block_size*j, block_size*(j+1), 1)
             blockwise_inverse[slice_i, slice_j] = np.linalg.inv(matrix[slice_i, slice_j])
