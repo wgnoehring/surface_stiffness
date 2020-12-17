@@ -5,6 +5,7 @@ import sys
 from abc import ABC
 import numpy as np
 from numpy import ma
+from pathlib import Path
 
 matrix_indices_for_voigt_index = {
     0: (0, 0),
@@ -466,3 +467,190 @@ class OrderedVectorToSquareGrid(Reshape):
 
     def grid_to_vector(self, x):
         return np.ravel(x)
+
+class BlockMatrixStatistics(object):
+
+    """
+    Class that has access to a collection of block matrices and 
+    can calculate statistics.
+
+    Suppose we have `M` arrays of shape `(N,N)`, where each array
+    can be partitioned into `Nb×Nb` blocks of shape `(Sb,Sb)`. In
+    each of the `M` arrays, there are then `Nb` 'block rows' of
+    shape `(Sb, N)`. This class implements methods to calculate
+    statistics of block rows without loading all arrays into memory.
+
+    Say we want to calculate the mean of all block rows in all `M` arrays.
+    A simple solution would be to stack the `M*Nb` block rows to obtain an
+    array of shape `(Sb, N, M*Nb)`. However, this would require a lot of
+    memory. For example, if `N=2883` and `M=500`, then we would need ca. 33 GB.
+    
+    This class divides each of the `M` array into slices along the
+    second (column) dimension, and then calculates the statistics
+    slice by slice. Let `nc` be the number of columns in a slice. The
+    columns from the `M` arrays can be stacked to generate an array
+    `(Sb, nc, M*Nb)`. By calculating the statistic along the third
+    dimension, we obtain the partial statistic of shape `(Sb, nc)`. By
+    doing this calculation for all slices and joining the resulting
+    `(Sb, nc)` arrays, we obtain the full statistic of shape `(Sb, N)`.
+
+    For example, if `N=2883`, `Sb=3, and `M=500`, and we do not want to
+    use more than 1 GB or RAM, then `M*(Nb*Sb)*nc*X<=1GB`, where `X` is
+    the size of an array element (`np.zeros(1,dtype=A.dtype).nbytes`
+    for input array `A`), hence `nc<= 1GB/X/M/Nb/Sb`.
+    
+    Consider another complication: suppose we are additionally given
+    `M` masks `K` for the block rows in the corresponding arrays. Each
+    mask is a bool array of shape `(Nb,)`, where element `K[i]` tells
+    whether block row `i` should be taken into account or not. Let
+    `Nk` be the number of `True` values in some `K`. Then we should
+    first select the `(Nk*Sb, nc)` sub-array before proceeding.
+
+    Parameters
+    ----------
+    paths: list
+        List of paths to files from which to read. Each file should contain a
+        numpy ndarray of shape `(N, N)`. `N` must be the same for all files.
+    block_size : int
+        Size of the square blocks in each block matrix
+    max_bytes :  int
+        Partition the block matrices into column slices and work on these
+        slices, so that the concatenation of slices from all input files
+        does not consume more memory than `max_bytes` bytes
+    block_mask_for_path : dict
+        Dictionary with the files in paths as keys. The values are block masks,
+        i.e. numpy arrays of shape `(Nb,)`, whose members are either True or
+        False. If `block_mask_for_path[file[i]][j]==False`, then the i-th block
+        row in the j-th file will not be included in the statistics.
+
+    Attributes
+    ----------
+    paths: list
+        List of paths to files from which to read. Each file should contain a
+        numpy ndarray of shape `(N, N)`. `N` must be the same for all files.
+    block_size : int
+        Size of the square blocks in each block matrix
+    max_bytes :  int
+        Partition the block matrices into column slices and work on these
+        slices, so that the concatenation of slices from all input files
+        does not consume more memory than `max_bytes` bytes
+    block_mask_for_path : dict
+        Dictionary with the files in paths as keys. The values are block masks,
+        i.e. numpy arrays of shape `(Nb,)`, whose members are either True or
+        False. If `block_mask_for_path[file[i]][j]==False`, then the i-th block
+        row in the j-th file will not be included in the statistics.
+    max_columns : int 
+        Maximum number of columns that can be extracted from each
+        array so that the concatenation of data from all arrays
+        does not consume more than `max_bytes` bytes of memory
+    column_bin_edges : list
+        Partitioning of the array along the second (column)
+        dimension into work arrays. Work array `i` runs from
+        `column_bin_edges[i]:column_bin_edges[i+1]`.
+    num_block_rows : int
+        Number of block rows in each file; will be determined by reading 
+        the first file.
+    bytes_per_var : int
+        Number of bytes per array entry, should be 8 in case of standard 
+        numpy float arrays, and 16 in case of standard complex arrays.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from tempfile import NamedTemporaryFile
+    >>> from os import remove
+    >>> np.set_printoptions(precision=2, linewidth=80)
+    >>> block_size = 3
+    >>> num_blocks = 33 
+    >>> A = np.random.rand(num_blocks * block_size, num_blocks * block_size) 
+    >>> tempfile = NamedTemporaryFile(delete=False)
+    >>> np.save(tempfile, A)
+    >>> tempfile.close()
+    >>> M = 20
+    >>> mock_path_list = [tempfile.name] * M
+    >>> calculator = BlockMatrixStatistics(mock_path_list, block_size, max_bytes=1e8)
+    >>> # Calculate the mean and the variance across all M arrays, 
+    >>> # which should be the same as the block row statistics
+    >>> # of one array, since all arrays are the same.
+    >>> results = calculator.calculate_statistics((np.mean, np.var))
+    >>> x = np.load(mock_path_list[0])
+    >>> x = np.split(x, x.shape[0]//block_size)
+    >>> x = np.dstack(x)
+    >>> mean_one = np.mean(x, axis=2)
+    >>> var_one = np.var(x, axis=2)
+    >>> assert(np.allclose(results[np.mean], mean_one))
+    >>> assert(np.allclose(results[np.var], var_one))
+    >>> remove(tempfile.name)
+    """
+
+    def __init__(self, paths: list, block_size: int, max_bytes: int=int(1e9), block_mask_for_path: dict = {}):
+        self.paths = [Path(p) for p in paths]
+        for path in self.paths:
+            if not path.is_file():
+                raise ValueError(f"{path} not a file")
+        self.block_size = block_size
+        self.max_bytes = max_bytes
+        x = np.load(paths[0])
+        if x.ndim != 2:
+            raise ValueError("input arrays must have two dimensions")
+        if x.shape[0]%block_size:
+            raise ValueError(
+                f"input array cannot be partitioned into blocks of "
+                "size {block_size} along first dimension"
+            )
+        self.bytes_per_var = x[0, 0].nbytes
+        self.num_rows = x.shape[0] 
+        self.num_block_rows = self.num_rows // self.block_size
+        self.num_columns = x.shape[1] 
+        self._calculate_max_columns()
+        self.row_selection_for_path = dict()
+        for path in block_mask_for_path.keys():
+            block_mask = np.load(block_mask_for_path[path])
+            row_mask = np.repeat(block_mask, self.block_size)
+            self.row_selection_for_path[path] = row_mask.nonzero()
+
+    def calculate_statistics(self, statistics):
+        results = {s:[] for s in statistics}
+        for i in range(len(self.column_bin_edges)-1):
+            block_rows = []
+            for path in self.paths:
+                block_rows.extend(
+                    self._load_columns(path, self.column_bin_edges[i], self.column_bin_edges[i+1])
+                )
+            block_rows = np.dstack(block_rows)
+            for s in statistics:
+                results[s].append(s(block_rows, axis=2))
+        for stat, res in results.items():
+            results[stat] = np.hstack(res)
+        return results
+
+    def _calculate_max_columns(self):
+        """Calculate maximum number of block columns to load from each file."""
+        max_num_variables = self.max_bytes // self.bytes_per_var
+        max_variables_per_file = max_num_variables // len(self.paths)
+        self.max_columns = max_variables_per_file // self.num_rows
+        if self.max_columns == 0:
+            raise ValueError(f"cannot perform calculation with max_bytes={self.max_bytes}")
+        imax = self.num_columns // self.max_columns
+        if imax * self.max_columns == self.num_columns: 
+            # even partitioning
+            self.column_bin_edges = np.arange(0, self.num_columns+1, self.max_columns, dtype=int)
+            self.column_bin_edges[-1] += 1 # to include last column
+        else:
+            self.column_bin_edges = np.r_[
+                np.arange(0, self.num_columns, self.max_columns, dtype=int), 
+                self.num_columns+1
+            ]
+
+    def _load_columns(self, path, column_start, column_end):
+        x_mmap = np.load(path, mmap_mode="r")
+        x = x_mmap[:, column_start:column_end].copy()
+        del(x_mmap)
+        if x.shape[0]%self.block_size:
+            raise ValueError(
+                f"input array cannot be partitioned into blocks of "
+                "size {self.block_size} along first dimension"
+            )
+        if path in self.row_selection_for_path.keys():
+            x = x[self.row_selection_for_path[path], :]
+        return np.vsplit(x, x.shape[0]//self.block_size)
