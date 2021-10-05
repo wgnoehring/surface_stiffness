@@ -1,6 +1,6 @@
 This repository contains Python code that was used in the calculations in [[1]](#1).
 
-<img src="https://github.com/wgnoehring/surface_stiffness/blob/master/assets/overview.png" width="411" height="363">
+<img src="https://github.com/wgnoehring/surface_stiffness/blob/master/assets/overview.png" width="548" height="484">
 
 # References
 
