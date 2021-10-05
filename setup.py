@@ -21,6 +21,6 @@ setup(
    description='Python code for the manuscript https://arxiv.org/abs/2101.12519',
    long_description=open('README.md').read(),
    install_requires=[
-        "numpy", "pandas", "scipy"
+        "numpy", "pandas", "scipy", "pathlib"
    ],
 )

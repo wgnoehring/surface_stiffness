@@ -10,7 +10,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "path_to_hessian",
-        type=pathlib.Path,
+        type=Path,
         help="Path to the file containing the Hessian matrix (block sparse row format).",
     )
     parser.add_argument(
