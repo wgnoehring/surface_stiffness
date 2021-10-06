@@ -98,7 +98,7 @@ class FCCSurface001(Crystal):
         """Calculate the mean area per atom from the true edge length."""
         return self.true_edge_length**2 / float(self.num_atoms_surface)
 
-    def _read_atoms_from_file(self, file, format="xyz"):
+    def _read_atoms_from_file(self, file, format="extxyz"):
         """Read atoms from file and sort by identifier
 
         Requires the Atomic Simulation Environment (ASE) [1]_.
