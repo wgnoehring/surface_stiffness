@@ -18,7 +18,10 @@ __email__ = "wolfram.noehring@imtek.uni-freiburg.de"
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "configuration", help="Atomic configuration in xyz format understood by ASE"
+        "configuration", help="Atomic configuration in a format understood by ASE"
+    )
+    parser.add_argument(
+        "--format", default="extxyz", help="Input file format", choices=io.formats.ioformats.keys()
     )
     parser.add_argument(
         "potential", help="Embedded Atom Method interatomic potential table"
