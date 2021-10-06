@@ -32,7 +32,7 @@ def main():
         help="Output file containing the Hessian in BSR format",
     )
     args = parser.parse_args()
-    atoms = io.read(args.configuration, format="xyz")
+    atoms = io.read(args.configuration, format=args.format)
     calculator = calculators.eam.calculator.EAM(args.potential)
     atoms.set_calculator(calculator)
     atoms.set_pbc([True, True, False])
