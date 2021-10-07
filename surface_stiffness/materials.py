@@ -127,3 +127,36 @@ url: "https://www.ctcms.nist.gov/potentials/Download/2011--Bonny-G-Terentyev-D-P
     C12=147.071946812490665,
     C44=125.030567589943999,
 )
+
+average_FeCuNi_Bonny_2009 = FCCMaterial(
+    elements=("A",), concentrations=(1.0,),  
+    source="""\
+---
+description: EAM potential for alloys of Fe, Cu and Ni, with average-alloy 
+  potential for the equicomposition alloy with 33% Fe, 33% Cu, and 33% Ni.
+reference: "G. Bonny, R.C. Pasianot, N. Castin, and L. Malerba (2009), 'Ternary Fe-Cu-Ni many-body potential to model reactor 
+    pressure vessel steels: First validation by simulated thermal annealing', 
+    Philosophical Magazine, 89(34-36), 3531-3546. DOI: 10.1080/14786430903299824."
+url: "https://www.ctcms.nist.gov/potentials/Download/2009--Bonny-G-Pasianot-R-C-Castin-N-Malerba-L--Fe-Cu-Ni/1/FeCuNi.eam.alloy"
+""",
+    lattice_parameter=3.541576654067287, 
+    C11=170.283226176245648, 
+    C12=138.349539724297330, 
+    C44=97.758459966605074,
+)
+
+random_FeCuNi_Bonny_2009 = FCCMaterial(
+    elements=("Fe", "Cu", "Ni"), concentrations=(1.0/3.0, 1.0/3.0, 1.0/3.0),  
+    source="""\
+---
+description: EAM potential for alloys of Fe, Cu and Ni. The data here is for the equicomposition random alloy with 33% Fe, 33% Cu, and 33% Ni.
+reference: "G. Bonny, R.C. Pasianot, N. Castin, and L. Malerba (2009), 'Ternary Fe-Cu-Ni many-body potential to model reactor 
+    pressure vessel steels: First validation by simulated thermal annealing', 
+    Philosophical Magazine, 89(34-36), 3531-3546. DOI: 10.1080/14786430903299824."
+url: "https://www.ctcms.nist.gov/potentials/Download/2009--Bonny-G-Pasianot-R-C-Castin-N-Malerba-L--Fe-Cu-Ni/1/FeCuNi.eam.alloy"
+""",
+    lattice_parameter=3.5484938563151407,
+    C11=163.75976428723982,
+    C12=133.204581610367,
+    C44=93.61606745700065,
+)
