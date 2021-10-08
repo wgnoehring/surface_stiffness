@@ -456,17 +456,25 @@ class Reshape(ABC):
         raise NotImplementedError
 
 
-class OrderedVectorToSquareGrid(Reshape):
+class OrderedVectorToRectangularGrid(Reshape):
 
-    def __init__(self, edge_length):
-        """Transform between an ordered vector and a square grid."""
-        self.grid_shape = (edge_length, edge_length)
+    def __init__(self, edge_length_x, edge_length_y):
+        """Transform between an ordered vector and a rectangular grid."""
+        self.grid_shape = (edge_length_x, edge_length_y)
 
     def vector_to_grid(self, x):
         return np.reshape(x, (-1, self.grid_shape[1]))
 
     def grid_to_vector(self, x):
         return np.ravel(x)
+
+
+class OrderedVectorToSquareGrid(OrderedVectorToRectangularGrid):
+
+    def __init__(self, edge_length):
+        """Transform between an ordered vector and a square grid."""
+        super().__init__(edge_length, edge_length)
+
 
 class BlockMatrixStatistics(object):
 
