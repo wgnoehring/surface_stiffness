@@ -187,7 +187,7 @@ class FCCSurface001(Crystal):
         symbols = atoms.get_chemical_symbols()
         symbols = np.array(symbols, dtype="S2")
         symbols = symbols[:self.num_atoms_surface]
-        symbols = np.reshape(symbols, (-1, self.num_atoms_edge))
+        symbols = self.reshape.vector_to_grid(symbols)
         unique_symbols = np.unique(symbols)
         mask_for_symbol = {}
         for s in unique_symbols:
@@ -338,7 +338,7 @@ class FCCSurface011(Crystal):
         symbols = atoms.get_chemical_symbols()
         symbols = np.array(symbols, dtype="S2")
         symbols = symbols[:self.num_atoms_surface]
-        symbols = np.reshape(symbols, (-1, self.num_atoms_edge))  # TODO: use self.reshape
+        symbols = self.reshape.vector_to_grid(symbols)
         unique_symbols = np.unique(symbols)
         mask_for_symbol = {}
         for s in unique_symbols:
