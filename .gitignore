@@ -2,3 +2,4 @@ docs_src/_build
 docs_src/api
 docs_src/_build/*
 build
+dist
