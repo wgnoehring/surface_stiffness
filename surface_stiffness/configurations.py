@@ -8,13 +8,14 @@ from .materials import Material
 from .matrix import OrderedVectorToSquareGrid
 from importlib import import_module
 
-#TODO: method to generate Lammps data files
+# TODO: method to generate Lammps data files
+
 
 def _read_atoms_from_file(file, format="extxyz"):
     """Read atoms from file and sort by identifier
 
     Requires the Atomic Simulation Environment (ASE) [1]_.
-    
+
     Parameters
     ----------
     file : str
@@ -76,6 +77,7 @@ class Crystal(ABC):
         assert np.isclose(np.linalg.det(R), 1.0)
         return R
 
+
 @dataclass
 class FCCSurface001(Crystal):
     """Represents a slab with a (001) surface.
@@ -98,7 +100,7 @@ class FCCSurface001(Crystal):
         Number of atoms :math:`N_e` along an edge in x- and y-direction.
     num_atoms_surface: int
         Number of surface atoms
-    num_subsurface_planes: int 
+    num_subsurface_planes: int
         Number of planes below the surface, excluding substrate planes
     true_edge_length: float
         True length of the cell in x- and y-direction
@@ -107,24 +109,24 @@ class FCCSurface001(Crystal):
         considering surface and subsurface planes
     """
 
-    num_atoms_edge : int
-    num_atoms_surface : int = field(init=False)
-    num_subsurface_planes : int
-    true_edge_length : float  = None
-    thickness : float = None
+    num_atoms_edge: int
+    num_atoms_surface: int = field(init=False)
+    num_subsurface_planes: int
+    true_edge_length: float = None
+    thickness: float = None
 
-    x = np.array(( 1.0, 1.0, 0.0))
+    x = np.array((1.0, 1.0, 0.0))
     y = np.array((-1.0, 1.0, 0.0))
-    z = np.array(( 0.0, 0.0, 1.0))
+    z = np.array((0.0, 0.0, 1.0))
     rotation_matrix = Crystal.generate_rotation_matrix(x, y, z)
 
     def __post_init__(self):
-        self.num_atoms_surface = self.num_atoms_edge**2
+        self.num_atoms_surface = self.num_atoms_edge ** 2
         self.reshape = OrderedVectorToSquareGrid(self.num_atoms_edge)
 
     def calculate_area_per_atom(self):
         """Calculate the mean area per atom from the true edge length."""
-        return self.true_edge_length**2 / float(self.num_atoms_surface)
+        return self.true_edge_length ** 2 / float(self.num_atoms_surface)
 
     def calculate_unrelaxed_thickness(self, lattice_parameter):
         """Calculate the theoretical thickness in z-direction.
@@ -138,7 +140,7 @@ class FCCSurface001(Crystal):
         -------
         thickness : float
         """
-        num_planes_considered = (1.0 + self.num_subsurface_planes)
+        num_planes_considered = 1.0 + self.num_subsurface_planes
         return num_planes_considered * lattice_parameter / 2.0
 
     def measure_thickness(self, file):
@@ -157,12 +159,10 @@ class FCCSurface001(Crystal):
         """
         atoms = _read_atoms_from_file(file)
         z = atoms.get_positions()[:, 2]
-        num_planes_considered = (1.0 + self.num_subsurface_planes)
-        max_num_atoms = int(
-            self.num_atoms_surface * num_planes_considered
-        )
-        z_surf = np.mean(z[0:self.num_atoms_surface])
-        z_last = np.mean(z[max_num_atoms-self.num_atoms_surface:max_num_atoms])
+        num_planes_considered = 1.0 + self.num_subsurface_planes
+        max_num_atoms = int(self.num_atoms_surface * num_planes_considered)
+        z_surf = np.mean(z[0 : self.num_atoms_surface])
+        z_last = np.mean(z[max_num_atoms - self.num_atoms_surface : max_num_atoms])
         thickness = z_surf - z_last
         return thickness
 
@@ -186,7 +186,7 @@ class FCCSurface001(Crystal):
         atoms = _read_atoms_from_file(file)
         symbols = atoms.get_chemical_symbols()
         symbols = np.array(symbols, dtype="S2")
-        symbols = symbols[:self.num_atoms_surface]
+        symbols = symbols[: self.num_atoms_surface]
         symbols = self.reshape.vector_to_grid(symbols)
         unique_symbols = np.unique(symbols)
         mask_for_symbol = {}
@@ -206,7 +206,9 @@ class FCCSurface001(Crystal):
         ----------
         file : str
         """
-        mask_for_symbol, symbols = self.create_symbol_masks_for_surface(file, return_symbols=True)
+        mask_for_symbol, symbols = self.create_symbol_masks_for_surface(
+            file, return_symbols=True
+        )
         symbol_lengths = [len(s) for s in mask_for_symbol.keys()]
         max_length = max(symbol_lengths)
         header = ("+" + "-" * max_length) * self.num_atoms_edge + "+"
@@ -217,9 +219,13 @@ class FCCSurface001(Crystal):
             for i in range(self.num_atoms_edge):
                 unmasked = np.logical_not(mask_for_symbol[s][i, :])
                 symbol_row = symbols[i, :]
-                strings = [f"|{s.decode()}" if m else f"|{' '*max_length}" for s, m in zip(symbol_row, unmasked)]
+                strings = [
+                    f"|{s.decode()}" if m else f"|{' '*max_length}"
+                    for s, m in zip(symbol_row, unmasked)
+                ]
                 print("".join(strings) + "|")
             print(header)
+
 
 @dataclass
 class FCCSurface011(Crystal):
@@ -245,7 +251,7 @@ class FCCSurface011(Crystal):
         Number of atoms :math:`N_e` along an edge in the y-direction
     num_atoms_surface: int
         Number of surface atoms
-    num_subsurface_planes: int 
+    num_subsurface_planes: int
         Number of planes below the surface, excluding substrate planes
     true_edge_length_x: float
         True length of the cell in the x-direction
@@ -256,26 +262,32 @@ class FCCSurface011(Crystal):
         considering surface and subsurface planes
     """
 
-    num_atoms_edge_x : int
-    num_atoms_edge_y : int
-    num_atoms_surface : int = field(init=False)
-    num_subsurface_planes : int
-    true_edge_length_x : float  = None
-    true_edge_length_y : float  = None
-    thickness : float = None
+    num_atoms_edge_x: int
+    num_atoms_edge_y: int
+    num_atoms_surface: int = field(init=False)
+    num_subsurface_planes: int
+    true_edge_length_x: float = None
+    true_edge_length_y: float = None
+    thickness: float = None
 
-    x = np.array(( 1.0, 0.0, 0.0))
-    y = np.array(( 0.0, 1.0,-1.0))
-    z = np.array(( 0.0, 1.0, 1.0))
+    x = np.array((1.0, 0.0, 0.0))
+    y = np.array((0.0, 1.0, -1.0))
+    z = np.array((0.0, 1.0, 1.0))
     rotation_matrix = Crystal.generate_rotation_matrix(x, y, z)
 
     def __post_init__(self):
         self.num_atoms_surface = self.num_atoms_edge_x * self.num_atoms_edge_y
-        self.reshape = OrderedVectorToRectangularGrid(self.num_atoms_edge_x, self.num_atoms_edge_y)
+        self.reshape = OrderedVectorToRectangularGrid(
+            self.num_atoms_edge_x, self.num_atoms_edge_y
+        )
 
     def calculate_area_per_atom(self):
         """Calculate the mean area per atom from the true edge length."""
-        return self.true_edge_length_x * self.true_edge_length_y / float(self.num_atoms_surface)
+        return (
+            self.true_edge_length_x
+            * self.true_edge_length_y
+            / float(self.num_atoms_surface)
+        )
 
     def calculate_unrelaxed_thickness(self, lattice_parameter):
         """Calculate the theoretical thickness in z-direction.
@@ -289,7 +301,7 @@ class FCCSurface011(Crystal):
         -------
         thickness : float
         """
-        num_planes_considered = (1.0 + self.num_subsurface_planes)
+        num_planes_considered = 1.0 + self.num_subsurface_planes
         return num_planes_considered * lattice_parameter / 2.0 / np.sqrt(2.0)
 
     def measure_thickness(self, file):
@@ -308,12 +320,10 @@ class FCCSurface011(Crystal):
         """
         atoms = _read_atoms_from_file(file)
         z = atoms.get_positions()[:, 2]
-        num_planes_considered = (1.0 + self.num_subsurface_planes)
-        max_num_atoms = int(
-            self.num_atoms_surface * num_planes_considered
-        )
-        z_surf = np.mean(z[0:self.num_atoms_surface])
-        z_last = np.mean(z[max_num_atoms-self.num_atoms_surface:max_num_atoms])
+        num_planes_considered = 1.0 + self.num_subsurface_planes
+        max_num_atoms = int(self.num_atoms_surface * num_planes_considered)
+        z_surf = np.mean(z[0 : self.num_atoms_surface])
+        z_last = np.mean(z[max_num_atoms - self.num_atoms_surface : max_num_atoms])
         thickness = z_surf - z_last
         return thickness
 
@@ -337,7 +347,7 @@ class FCCSurface011(Crystal):
         atoms = _read_atoms_from_file(file)
         symbols = atoms.get_chemical_symbols()
         symbols = np.array(symbols, dtype="S2")
-        symbols = symbols[:self.num_atoms_surface]
+        symbols = symbols[: self.num_atoms_surface]
         symbols = self.reshape.vector_to_grid(symbols)
         unique_symbols = np.unique(symbols)
         mask_for_symbol = {}
@@ -347,8 +357,10 @@ class FCCSurface011(Crystal):
             return mask_for_symbol, symbols
         return mask_for_symbol
 
-@dataclass 
+
+@dataclass
 class Configuration:
     """Represents a crystal configuration."""
-    material : Material
+
+    material: Material
     crystal: Crystal

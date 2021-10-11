@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Functions for calculating surface stiffnesses."""
 import numpy as np
-from .matrix import  load_atomistic_stiffness, invert_grid_of_flattened_matrices
+from .matrix import load_atomistic_stiffness, invert_grid_of_flattened_matrices
 
 
 def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
@@ -20,14 +20,14 @@ def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
     the :math:`3\times{}3` matrices to obtain stiffness matrices.
 
     The :math:`N^2` :math:`3\times{}3` matrices at a given Brillouin zone
-    point take the same values in case of a pure crytal. In the case of 
+    point take the same values in case of a pure crytal. In the case of
     an alloy (or some other disorder), the values differ. We can compute
-    a confidence interval of the variation in stiffness by adding and 
-    subtracting a multiple of the standard deviation of the Green's 
+    a confidence interval of the variation in stiffness by adding and
+    subtracting a multiple of the standard deviation of the Green's
     functions before inversion. Since the Greens functions are complex-valued,
     we use the following approach. Noting that the variance of a complex
     number is :math:`Var[z] = Var[Re(z)] + Var[Im(z)]`, where :math:`Re`
-    and :math:`Im` indicate the real and imaginary parts, respectively, 
+    and :math:`Im` indicate the real and imaginary parts, respectively,
     we compute :math:`z +- m(\sigma(Re(z)) + i * \sigma(Im(z)))`, where
     :math:`\sigma` is the standard deviation, and :math:`m` is the number
     of standard deviations to add.
@@ -47,7 +47,7 @@ def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
         Number of standard deviations to add/subtract from the average Greens
         functions to obtain a confidence interval.
     mask: array-like
-        Array of ones and zeros, or None. If None, then the average of the 
+        Array of ones and zeros, or None. If None, then the average of the
         Greens functions runs over all sites. If not None, then the average
         runs only over sites with a one in :code:`mask`.
 
@@ -56,7 +56,7 @@ def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
     mean_stiff: numpy.ndarray
         :code:`((N*3), (N*3))` array containing the inverses of the
         average Greens functions. Each block of shape :code:`(3,3)`
-        the inverse of the corresponding block in the :code:`((N*3),(N*3))` 
+        the inverse of the corresponding block in the :code:`((N*3),(N*3))`
         of average Greens functions.
     upper_stiff: numpy.ndarray
         Upper confidence limit, array with the same shape as :code:`mean_stiff`
@@ -65,8 +65,10 @@ def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
 
     """
     if num_stddev < 0:
-        raise ValueError("number of standard deviations for confidence interval must be greater or equal to zero")
-    mean_both, = load_atomistic_stiffness(
+        raise ValueError(
+            "number of standard deviations for confidence interval must be greater or equal to zero"
+        )
+    (mean_both,) = load_atomistic_stiffness(
         greens_functions,
         reshape=config.crystal.reshape,
         statistics=[np.average],
@@ -77,7 +79,7 @@ def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
     mean_stiff = invert_grid_of_flattened_matrices(mean_both)
     upper_stiff = lower_stiff = None
     if num_stddev > 0:
-        std_both, = load_atomistic_stiffness(
+        (std_both,) = load_atomistic_stiffness(
             greens_functions,
             reshape=config.crystal.reshape,
             statistics=[np.std],

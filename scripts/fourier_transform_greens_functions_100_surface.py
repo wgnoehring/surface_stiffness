@@ -17,13 +17,19 @@ __copyright__ = "Copyright 2020, Uni Freiburg"
 __license__ = "GNU General Public License"
 __email__ = "wolfram.noehring@imtek.uni-freiburg.de"
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "greens_functions", help="Numpy array containing the Green's functions. Alternatively: scipy sparse bsr matrix"
+        "greens_functions",
+        help="Numpy array containing the Green's functions. Alternatively: scipy sparse bsr matrix",
     )
     parser.add_argument(
-        "-f", "--input_format", choices=("numpy",  "sparse"), default="numpy", help="Input format: 'numpy' if the file should be loaded with numpy.load, 'sparse' if it should be loaded with scipy.sparse.load_npz"
+        "-f",
+        "--input_format",
+        choices=("numpy", "sparse"),
+        default="numpy",
+        help="Input format: 'numpy' if the file should be loaded with numpy.load, 'sparse' if it should be loaded with scipy.sparse.load_npz",
     )
     parser.add_argument(
         "output",
@@ -55,7 +61,8 @@ def main():
     # configurations.crystal. Height and side length of the
     # configuration do not matter here. The material does not matter.
     dummy_config = configurations.Configuration(
-        None, configurations.FCCSurface001(num_atoms_edge, 1, 1.0),  #
+        None,
+        configurations.FCCSurface001(num_atoms_edge, 1, 1.0),  #
     )
     ft_greens_functions = fourier_transform_symmetric_square_block_matrix(
         greens_functions, dummy_config.crystal.reshape

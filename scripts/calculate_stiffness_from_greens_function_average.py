@@ -13,6 +13,7 @@ from surface_stiffness.matrix import (
 )
 from surface_stiffness.stiffness import calculate_stiffness
 
+
 def main():
     args = parse_command_line()
     if args.confidence_interval != "stddev":
@@ -28,7 +29,8 @@ def main():
     # The number of subsurface planes and the surface
     # width are irrelevant here and can be set to 1
     config = configurations.Configuration(
-        material=None, crystal=configurations.FCCSurface001(num_atoms_edge, 1, 1.0),
+        material=None,
+        crystal=configurations.FCCSurface001(num_atoms_edge, 1, 1.0),
     )
     mean_stiff, upper_stiff, lower_stiff = calculate_stiffness(
         greens_functions, config, num_stddev=num_stddev, mask=None
@@ -48,7 +50,8 @@ def main():
 
     if args.element_wise is not None:
         mask_for_symbol, symbols = config.crystal.create_symbol_masks_for_surface(
-            args.element_wise, return_symbols=True,
+            args.element_wise,
+            return_symbols=True,
         )
         unique_symbols = np.unique(symbols)
         for symbol in unique_symbols:
@@ -67,32 +70,38 @@ def main():
             np.save(filename, np.ma.filled(mean_stiff))
             if args.confidence_interval == "stddev":
                 filename = f"./stiffness_from_average_of_greens_functions_{sutf}_atoms_confidence_interval_plus_{args.confidence_interval}_stddev.npy"
-                print(f"...writing upper confidence limit of stiffnesses of {sutf} atoms to {filename}")
+                print(
+                    f"...writing upper confidence limit of stiffnesses of {sutf} atoms to {filename}"
+                )
                 np.save(filename, np.ma.filled(upper_stiff))
                 filename = f"./stiffness_from_average_of_greens_functions_{sutf}_atoms_confidence_interval_minus_{args.confidence_interval}_stddev.npy"
-                print(f"...writing lower confidence limit of stiffnesses of {sutf} atoms to {filename}")
+                print(
+                    f"...writing lower confidence limit of stiffnesses of {sutf} atoms to {filename}"
+                )
                 np.save(filename, np.ma.filled(lower_stiff))
 
 
 def parse_command_line():
     parser = argparse.ArgumentParser(
-        description=dedent("""\
+        description=dedent(
+            """\
             Invert elastic greens functions to obtain stiffnesses.
         """
         ),
         formatter_class=argparse.RawTextHelpFormatter,
-        epilog=dedent("""\
+        epilog=dedent(
+            """\
             The stiffness matrices are saved to *.npy-files. If the input array provided
             by 'greens_functions' has shape ((N*N*3), (N*N*3)), then the output array(s)
             will have shape ((N*3), (N*3)), because the average across sites is computed
             before inversion.
             """
-        )
-
+        ),
     )
     parser.add_argument(
         "greens_functions",
-        help=dedent("""\
+        help=dedent(
+            """\
             Elastic Greens functions stored as numpy array with shape
             ((N*N*3), (N*N*3)). We assume that the atoms are arranged
             in a two-dimensional simple cubic lattice, where N is the
@@ -100,14 +109,15 @@ def parse_command_line():
             input array contains the Greens functions for one pair of
             atoms, or one point in the Brillouin zone.
             """
-        )
+        ),
     )
     parser.add_argument(
         "-e",
         "--element-wise",
         metavar="XYZ_FILE",
         help=(
-            dedent("""\
+            dedent(
+                """\
             If this argument is provided, the script calculates the
             average stiffness per element, meaning: for all elements
             'e', calculate the average over all sites occupied by 'e'.
@@ -123,34 +133,42 @@ def parse_command_line():
     # Arguments for particular confidence interval types
     subparsers = parser.add_subparsers(
         dest="confidence_interval",
-        help=(dedent("""\
+        help=(
+            dedent(
+                """\
             Method for calculating confidence intervals. If none is
             specified, then only the mean stiffness will be calculated.
             """
             )
-        )
+        ),
     )
     none = subparsers.add_parser(
         "none",
-        help=(dedent("""\
+        help=(
+            dedent(
+                """\
             Calculate no confidence intervals
             """
             )
-        )
+        ),
     )
     stddev = subparsers.add_parser(
         "stddev",
-        help=(dedent("""\
+        help=(
+            dedent(
+                """\
             Calculate confidence intervals by adding/substracting
             multiples of the standard deviations of the real and
             imaginary parts of the greens functions before inversion.
             """
             )
-        )
+        ),
     )
     bootstrap = subparsers.add_parser(
         "bootstrap",
-        help=(dedent("""\
+        help=(
+            dedent(
+                """\
             Calculate confidence intervals using a bootstrap approach. At
             every point in the Brillouin zone, and for every component of
             the Green's function, resample the component num_bootstrap
@@ -165,21 +183,21 @@ def parse_command_line():
         "--num_stddev",
         type=int,
         default=0,
-        help="Number of standard deviations around the mean"
+        help="Number of standard deviations around the mean",
     )
     bootstrap.add_argument(
-        "-n", 
-        "--num_resamples", 
+        "-n",
+        "--num_resamples",
         type=int,
         default=100,
-        help="Number of bootstrap resamples"
+        help="Number of bootstrap resamples",
     )
     bootstrap.add_argument(
-        "-p", 
-        "--percentiles", 
+        "-p",
+        "--percentiles",
         type=float,
         nargs="+",
-        help="Percentiles to calculate, e.g. 10 90"
+        help="Percentiles to calculate, e.g. 10 90",
     )
     args = parser.parse_args()
     return args

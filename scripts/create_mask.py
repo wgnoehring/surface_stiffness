@@ -3,13 +3,15 @@
 import argparse
 from textwrap import dedent
 import numpy as np
+
 np.set_printoptions(precision=1)
 from surface_stiffness.configurations import FCCSurface001
+
 
 def main():
     args = parse_command_line()
     symbols = read_symbols_from_xyz(
-        args.xyz_file, num_atoms=args.num_atoms_edge**2, check_sorted=True
+        args.xyz_file, num_atoms=args.num_atoms_edge ** 2, check_sorted=True
     )
     mask = np.array([s == args.symbol for s in symbols], dtype=bool)
     np.save(args.output_file, mask)
@@ -17,7 +19,8 @@ def main():
 
 def parse_command_line():
     parser = argparse.ArgumentParser(
-        description=dedent("""\
+        description=dedent(
+            """\
             Read the first N atoms from an xyz file and create
             an array of booleans, which indicates whether
             the atoms belong to a particular species or not.
@@ -32,20 +35,19 @@ def parse_command_line():
         ),
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    parser.add_argument(
-        "xyz_file",
-        help="XYZ configuration file with atomic symbols"
-    )
+    parser.add_argument("xyz_file", help="XYZ configuration file with atomic symbols")
     parser.add_argument(
         "num_atoms_edge",
         type=int,
-        help=("Number of atoms along the edge of the configuration. " +
-             "num_atoms_edge**2 atoms will be read from the file." )
+        help=(
+            "Number of atoms along the edge of the configuration. "
+            + "num_atoms_edge**2 atoms will be read from the file."
+        ),
     )
     parser.add_argument("symbol", help="Atomic symbol to search for.")
     parser.add_argument(
-        "output_file", 
-        help="Boolean array will be saved to this file (numpy .npy-format)"
+        "output_file",
+        help="Boolean array will be saved to this file (numpy .npy-format)",
     )
     return parser.parse_args()
 
@@ -66,7 +68,7 @@ def read_symbols_from_xyz(file, num_atoms, check_sorted=True):
     =======
     symbols : list
         atomic symbols
-    """ 
+    """
     symbols = []
     with open(file) as f:
         f.readline()
@@ -75,7 +77,7 @@ def read_symbols_from_xyz(file, num_atoms, check_sorted=True):
         for i in range(num_atoms):
             line = f.readline()
             words = line.strip().split()
-            index = int(words[0]) - 1 # atom IDs start at 1
+            index = int(words[0]) - 1  # atom IDs start at 1
             symbols.append(words[1])
             if check_sorted:
                 if index - prev_index != 1:

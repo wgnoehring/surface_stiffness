@@ -55,7 +55,7 @@ def extract_path(values, x_grid, y_grid, fraction=1.0, true_edge_lengths=None):
         y-coordinates of the points, the third column contains the
         associated values from :code:`values`, and the fourth colum
         is a monotonically increasing coordinate along the path.
-    
+
     Examples
     --------
     >>> component = np.real(stiffness[:, :, voigt_index])
@@ -142,7 +142,7 @@ def extract_path(values, x_grid, y_grid, fraction=1.0, true_edge_lengths=None):
 
 def generate_wavevectors(nrows, ncols):
     """Generate wavevectors.
-    
+
     Consider a discretization of the Brillouin zone into :code:`nrows`
     by :code:`ncols` pixels. This function generates a meshgrid
     of the components of the wavevectors at the pixel centroids.

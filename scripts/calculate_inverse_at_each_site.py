@@ -3,8 +3,10 @@
 import argparse
 from textwrap import dedent
 import numpy as np
+
 np.set_printoptions(precision=1)
 from surface_stiffness.matrix import calculate_blockwise_inverse
+
 
 def main():
     args = parse_command_line()
@@ -15,7 +17,8 @@ def main():
 
 def parse_command_line():
     parser = argparse.ArgumentParser(
-        description=dedent("""\
+        description=dedent(
+            """\
             Invert elastic greens functions to obtain stiffnesses.
         """
         ),
@@ -23,7 +26,8 @@ def parse_command_line():
     )
     parser.add_argument(
         "greens_functions",
-        help=dedent("""\
+        help=dedent(
+            """\
             Elastic Greens functions stored as numpy array with shape
             ((N*N*3), (N*N*3)). We assume that the atoms are arranged
             in a two-dimensional simple cubic lattice, where N is the
@@ -39,7 +43,7 @@ def parse_command_line():
             here are meant to check site-by-site fluctuations of the
             stiffness.
             """
-        )
+        ),
     )
     parser.add_argument("output_file", help="Output file (numpy .npy-file)")
     return parser.parse_args()
