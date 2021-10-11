@@ -1,8 +1,10 @@
 from setuptools import setup
+import versioneer
 
 setup(
    name='surface_stiffness',
-   version='0.1.0',
+   version=versioneer.get_version(),
+   cmdclass=versioneer.get_cmdclass(),
    author='Wolfram Nöhring',
    author_email='wolfram.noehring@imtek.uni-freiburg.de',
    packages=['surface_stiffness'],

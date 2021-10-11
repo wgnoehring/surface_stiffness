@@ -1,0 +1,7 @@
+include versioneer.py
+include surface_stiffness/_version.py
+include README.md
+include LICENSE
+include requirements.txt
+graft surface_stiffness
+recursive-exclude * *.py[co]
