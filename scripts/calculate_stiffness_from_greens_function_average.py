@@ -3,6 +3,7 @@
 from textwrap import dedent
 import importlib
 import argparse
+import logging
 import numpy as np
 from surface_stiffness import configurations
 from surface_stiffness.matrix import (
@@ -13,6 +14,7 @@ from surface_stiffness.matrix import (
 )
 from surface_stiffness.stiffness import calculate_stiffness
 
+logger = logging.getLogger('surface_stiffness.scripts.calculate_stiffness_from_greens_function_average')
 
 def main():
     args = parse_command_line()
@@ -35,17 +37,16 @@ def main():
     mean_stiff, upper_stiff, lower_stiff = calculate_stiffness(
         greens_functions, config, num_stddev=num_stddev, mask=None
     )
-    print(mean_stiff.shape)
     filename = f"./stiffness_from_average_of_greens_functions.npy"
-    print(f"...writing average stiffnesses to {filename}")
+    logger.info(f"...writing average stiffnesses to {filename}")
     np.save(filename, np.ma.filled(mean_stiff))
 
     if args.confidence_interval == "stddev":
         filename = f"./stiffness_from_average_of_greens_functions_confidence_interval_plus_{args.confidence_interval}_stddev.npy"
-        print(f"...writing upper confidence limit of stiffness to {filename}")
+        logger.info(f"...writing upper confidence limit of stiffness to {filename}")
         np.save(filename, np.ma.filled(upper_stiff))
         filename = f"./stiffness_from_average_of_greens_functions_confidence_interval_minus_{args.confidence_interval}_stddev.npy"
-        print(f"...writing lower confidence limit of stiffness to {filename}")
+        logger.info(f"...writing lower confidence limit of stiffness to {filename}")
         np.save(filename, np.ma.filled(lower_stiff))
 
     if args.element_wise is not None:
@@ -56,26 +57,26 @@ def main():
         unique_symbols = np.unique(symbols)
         for symbol in unique_symbols:
             sutf = symbol.decode("UTF-8")
-            print(f"Calculating stiffness for sites with {sutf} atoms")
+            logger.info(f"Calculating stiffness for sites with {sutf} atoms")
             mask = mask_for_symbol[symbol].ravel()
             num_masked = len(np.nonzero(mask)[0])
-            print(
+            logger.info(
                 f"{num_masked} masked values --> {config.crystal.num_atoms_surface-num_masked} not masked"
             )
             mean_stiff, upper_stiff, lower_stiff = calculate_stiffness(
                 greens_functions, config, num_stddev=num_stddev, mask=mask
             )
             filename = f"./stiffness_from_average_of_greens_functions_{sutf}_atoms.npy"
-            print(f"...writing average stiffnesses of {sutf} atoms to {filename}")
+            logger.info(f"...writing average stiffnesses of {sutf} atoms to {filename}")
             np.save(filename, np.ma.filled(mean_stiff))
             if args.confidence_interval == "stddev":
                 filename = f"./stiffness_from_average_of_greens_functions_{sutf}_atoms_confidence_interval_plus_{args.confidence_interval}_stddev.npy"
-                print(
+                logger.info(
                     f"...writing upper confidence limit of stiffnesses of {sutf} atoms to {filename}"
                 )
                 np.save(filename, np.ma.filled(upper_stiff))
                 filename = f"./stiffness_from_average_of_greens_functions_{sutf}_atoms_confidence_interval_minus_{args.confidence_interval}_stddev.npy"
-                print(
+                logger.info(
                     f"...writing lower confidence limit of stiffnesses of {sutf} atoms to {filename}"
                 )
                 np.save(filename, np.ma.filled(lower_stiff))

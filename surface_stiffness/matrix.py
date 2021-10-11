@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Functions for working with matrices."""
 import sys
+import logging
 from abc import ABC
 import numpy as np
 from numpy import ma
@@ -33,6 +34,7 @@ voigt_index_for_matrix_indices = {
 label_for_component = {0: "xx", 1: "yy", 2: "zz", 3: "yz", 4: "xz", 5: "xy"}
 """Subscript strings for the indices of a vector in Voigt notation as key-value pairs"""
 
+logger = logging.getLogger('surface_stiffness.matrix')
 
 def convert_matrix_to_voigt_vector(matrix):
     """Convert a 3×3 matrix into a Voigt vector.
@@ -99,7 +101,7 @@ def fourier_transform_symmetric_square_block_matrix(matrix, reshape, block_size=
         and matrix.shape[0] % block_size == 0
     )
     num_blocks = int(matrix.shape[0] / block_size)
-    print(
+    logger.info(
         f"input matrix for FFT is partitioned into {num_blocks}x{num_blocks} blocks of size {block_size}x{block_size}"
     )
     for block_index in range(num_blocks):
@@ -299,7 +301,7 @@ def load_atomistic_stiffness(
             output.append(stat)
         return tuple(output)
     else:
-        print(f"extracting data for atom index {atom_index}")
+        logger.info(f"extracting data for atom index {atom_index}")
         arr = zeros(
             (reshape.grid_shape[0], reshape.grid_shape[1], num_indices),
             dtype=required_dtype,

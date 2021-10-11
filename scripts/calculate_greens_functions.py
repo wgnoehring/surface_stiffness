@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import argparse
+import logging
 import numpy as np
 from pathlib import Path
 from scipy.sparse import load_npz
 import time
 
+logger = logging.getLogger('surface_stiffness.scripts.calculate_greens_functions')
 
 def main():
     parser = argparse.ArgumentParser()
@@ -67,7 +69,7 @@ def calculate_surface_greens_functions(
     start = time.time()
     inverse = np.linalg.inv(dense)
     end = time.time()
-    print(f"Time for matrix inversion: {end-start:.1f}")
+    logger.info(f"Time for matrix inversion: {end-start:.1f}")
     inverse = inverse[: num_atoms_per_plane * 3, : num_atoms_per_plane * 3]
     dense = dense[: num_atoms_per_plane * 3, : num_atoms_per_plane * 3]
     return inverse, dense

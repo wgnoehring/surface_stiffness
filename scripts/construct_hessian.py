@@ -2,6 +2,7 @@
 import sys
 import gzip
 import argparse
+import logging
 import numpy as np
 import time
 from ase import io
@@ -14,6 +15,7 @@ __copyright__ = "Copyright 2020, Uni Freiburg"
 __license__ = "GNU General Public License"
 __email__ = "wolfram.noehring@imtek.uni-freiburg.de"
 
+logger = logging.getLogger('surface_stiffness.scripts.construct_hessian')
 
 def main():
     parser = argparse.ArgumentParser()
@@ -42,9 +44,9 @@ def main():
     start = time.time()
     hessian = calculator.calculate_hessian_matrix(atoms, divide_by_masses=False)
     end = time.time()
-    print("Time for hessian matrix construction: {:f}".format(end - start))
-    print("Number of atoms: {:d}".format(len(atoms)))
-    print("Dimension of hessian matrix: {:d}x{:d}".format(*hessian.get_shape()))
+    logger.info("Time for hessian matrix construction: {:f}".format(end - start))
+    logger.info("Number of atoms: {:d}".format(len(atoms)))
+    logger.info("Dimension of hessian matrix: {:d}x{:d}".format(*hessian.get_shape()))
     save_npz(args.output, hessian)
 
 

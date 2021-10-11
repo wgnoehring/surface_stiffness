@@ -7,6 +7,7 @@ y-position (descending), and then assign new identifiers starting from one.
 """
 import sys
 import argparse
+import logging
 import numpy as np
 import pandas as pd
 
@@ -19,6 +20,7 @@ __copyright__ = "Copyright 2019, Uni Freiburg"
 __license__ = "GNU General Public License"
 __email__ = "wolfram.noehring@imtek.uni-freiburg.de"
 
+logger = logging.getLogger('surface_stiffness.scripts.change_atom_identifiers')
 
 def main():
     parser = argparse.ArgumentParser()
@@ -37,7 +39,7 @@ def main():
     data = to_list(args.infile)
 
     # Extract header and section information
-    print("Reading input configuration")
+    logger.info("Reading input configuration")
     header_section_or_comment = re.compile(".*?[a-zA-Z](?!\+|-)")
     comment = re.compile("^\#")
     header_keywords = ["atoms", "atom types"]

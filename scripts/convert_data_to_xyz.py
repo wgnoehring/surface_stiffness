@@ -13,12 +13,14 @@ import sys
 import argparse
 import numpy as np
 import re
+import logging
 
 __author__ = "Wolfram Georg Nöhring"
 __copyright__ = "Copyright 2019, Uni Freiburg"
 __license__ = "GNU General Public License"
 __email__ = "wolfram.noehring@imtek.uni-freiburg.de"
 
+logger = logging.getLogger('surface_stiffness.scripts.convert_data_to_xyz')
 
 def main():
     parser = argparse.ArgumentParser()
@@ -40,7 +42,7 @@ def main():
     # Get path of input file and seed for RNG
     data = to_list(args.infile)
     # Extract header and section information
-    print("Reading input configuration")
+    logger.info("Reading input configuration")
     header_section_or_comment = re.compile(".*?[a-zA-Z](?!\+|-)")
     comment = re.compile("^\#")
     header_keywords = ["atoms", "atom types", "xlo xhi", "ylo yhi", "zlo zhi"]

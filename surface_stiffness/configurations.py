@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Configurations as a combination of site and material information"""
 from abc import ABC
+import logging
 from dataclasses import dataclass, field
 import numpy as np
 from .materials import Material
@@ -10,6 +11,7 @@ from importlib import import_module
 
 # TODO: method to generate Lammps data files
 
+logger = logging.getLogger('surface_stiffness.configurations')
 
 def _read_atoms_from_file(file, format="extxyz"):
     """Read atoms from file and sort by identifier
