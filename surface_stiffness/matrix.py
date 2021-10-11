@@ -500,7 +500,7 @@ class Reshape(ABC):
 class OrderedVectorToRectangularGrid(Reshape):
     def __init__(self, edge_length_x, edge_length_y):
         """Transform between an ordered vector and a rectangular grid."""
-        self.grid_shape = (edge_length_x, edge_length_y)
+        self.grid_shape = (edge_length_y, edge_length_x)
 
     def vector_to_grid(self, x):
         return np.reshape(x, (-1, self.grid_shape[1]))
