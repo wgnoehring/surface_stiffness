@@ -110,10 +110,25 @@ def fourier_transform_symmetric_square_block_matrix(matrix, reshape, block_size=
         # We make no assumption about symmetry of 3x3 blocks
         for i in range(block_size):
             for j in range(block_size):
+                # matrix[row, j::block_size] corresponds to one specific subscript ij 
+                # of the surface stiffness
+                #
+                # We receive the data as a 1D array and need to reshape it into a 2D 
+                # array, so that the indices in that array reflect the arrangement of 
+                # sites in real space
+                # 
+                # Finally, we need to roll the array, so that index `[0, 0]` in the 
+                # 2D array corresponds to zero pair distance - this is the 
+                # self-interaction of a site
+                # 
+                # The row shift is determined by how many sites there are along the
+                # x-direction (corresponding to the column direction); for a square
+                # grid of sites, this is just `sqrt(num_blocks)`; in the case of a
+                # rectangular grid, we must take the second dimension of the reshape
                 row = block_size * block_index + i
                 values_on_grid = reshape.vector_to_grid(matrix[row, j::block_size])
                 values_on_grid = np.roll(
-                    values_on_grid, -(block_index // (int(np.sqrt(num_blocks)))), axis=0
+                    values_on_grid, -(block_index // reshape.grid_shape[1]), axis=0
                 )
                 values_on_grid = np.roll(values_on_grid, -block_index, axis=1)
                 traffo_on_grid = np.fft.fftshift(np.fft.fft2(values_on_grid))
