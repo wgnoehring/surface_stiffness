@@ -16,7 +16,7 @@ setup(
         "scripts/construct_hessian.py",
         "scripts/convert_data_to_xyz.py",
         "scripts/create_mask.py",
-        "scripts/fourier_transform_greens_functions_100_surface.py",
+        "scripts/fourier_transform_greens_functions.py",
     ],
     url="https://github.com/wgnoehring/surface_stiffness",
     license_files=("LICENSE",),
