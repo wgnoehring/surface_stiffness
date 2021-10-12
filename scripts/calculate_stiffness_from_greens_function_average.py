@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from textwrap import dedent
-import importlib
 import argparse
 import logging
 import numpy as np
