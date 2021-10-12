@@ -22,8 +22,6 @@ def main():
         num_stddev = 0
     else:
         num_stddev = args.num_stddev
-    if args.confidence_interval == "bootstrap":
-        raise NotImplementedError
     # The average stiffness will be calculated in any case.
     greens_functions = np.load(args.greens_functions)
     degrees_of_freedom = 3
@@ -165,40 +163,12 @@ def parse_command_line():
             )
         ),
     )
-    bootstrap = subparsers.add_parser(
-        "bootstrap",
-        help=(
-            dedent(
-                """\
-            Calculate confidence intervals using a bootstrap approach. At
-            every point in the Brillouin zone, and for every component of
-            the Green's function, resample the component num_bootstrap
-            times. Calculate the average of each sample and invert. Finally,
-            calculate the specified percentiles (argument --percentiles).
-            """
-            )
-        ),
-    )
     stddev.add_argument(
         "-n",
         "--num_stddev",
         type=int,
         default=0,
         help="Number of standard deviations around the mean",
-    )
-    bootstrap.add_argument(
-        "-n",
-        "--num_resamples",
-        type=int,
-        default=100,
-        help="Number of bootstrap resamples",
-    )
-    bootstrap.add_argument(
-        "-p",
-        "--percentiles",
-        type=float,
-        nargs="+",
-        help="Percentiles to calculate, e.g. 10 90",
     )
     args = parser.parse_args()
     return args
