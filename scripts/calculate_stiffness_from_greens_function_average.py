@@ -7,7 +7,10 @@ import numpy as np
 from surface_stiffness.matrix import OrderedVectorToRectangularGrid
 from surface_stiffness.stiffness import calculate_stiffness
 
-logger = logging.getLogger('surface_stiffness.scripts.calculate_stiffness_from_greens_function_average')
+logger = logging.getLogger(
+    "surface_stiffness.scripts.calculate_stiffness_from_greens_function_average"
+)
+
 
 def main():
     args = parse_command_line()
@@ -127,14 +130,13 @@ def parse_command_line():
         type=int,
         nargs=2,
         help=dedent(
-                """\
+            """\
             Number of sites along the x- and y-directions. 
             If this option is not set, it will be assumed 
             that the grid is square, and the dimensions 
             will be inferred from the shape of the greens
             functions array.
             """
-            
         ),
     )
     # Arguments for particular confidence interval types

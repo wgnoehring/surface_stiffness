@@ -7,7 +7,8 @@ from pathlib import Path
 from scipy.sparse import load_npz
 import time
 
-logger = logging.getLogger('surface_stiffness.scripts.calculate_greens_functions')
+logger = logging.getLogger("surface_stiffness.scripts.calculate_greens_functions")
+
 
 def main():
     parser = argparse.ArgumentParser()

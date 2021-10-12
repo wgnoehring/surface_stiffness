@@ -15,7 +15,8 @@ __copyright__ = "Copyright 2020, Uni Freiburg"
 __license__ = "GNU General Public License"
 __email__ = "wolfram.noehring@imtek.uni-freiburg.de"
 
-logger = logging.getLogger('surface_stiffness.scripts.construct_hessian')
+logger = logging.getLogger("surface_stiffness.scripts.construct_hessian")
+
 
 def main():
     parser = argparse.ArgumentParser()

@@ -35,7 +35,8 @@ voigt_index_for_matrix_indices = {
 label_for_component = {0: "xx", 1: "yy", 2: "zz", 3: "yz", 4: "xz", 5: "xy"}
 """Subscript strings for the indices of a vector in Voigt notation as key-value pairs"""
 
-logger = logging.getLogger('surface_stiffness.matrix')
+logger = logging.getLogger("surface_stiffness.matrix")
+
 
 def convert_matrix_to_voigt_vector(matrix):
     """Convert a 3×3 matrix into a Voigt vector.
@@ -111,17 +112,17 @@ def fourier_transform_symmetric_square_block_matrix(matrix, reshape, block_size=
         # We make no assumption about symmetry of 3x3 blocks
         for i in range(block_size):
             for j in range(block_size):
-                # matrix[row, j::block_size] corresponds to one specific subscript ij 
+                # matrix[row, j::block_size] corresponds to one specific subscript ij
                 # of the surface stiffness
                 #
-                # We receive the data as a 1D array and need to reshape it into a 2D 
-                # array, so that the indices in that array reflect the arrangement of 
+                # We receive the data as a 1D array and need to reshape it into a 2D
+                # array, so that the indices in that array reflect the arrangement of
                 # sites in real space
-                # 
-                # Finally, we need to roll the array, so that index `[0, 0]` in the 
-                # 2D array corresponds to zero pair distance - this is the 
+                #
+                # Finally, we need to roll the array, so that index `[0, 0]` in the
+                # 2D array corresponds to zero pair distance - this is the
                 # self-interaction of a site
-                # 
+                #
                 # The row shift is determined by how many sites there are along the
                 # x-direction (corresponding to the column direction); for a square
                 # grid of sites, this is just `sqrt(num_blocks)`; in the case of a
@@ -515,7 +516,7 @@ class OrderedVectorToSquareGrid(OrderedVectorToRectangularGrid):
         """Transform between an ordered vector and a square grid."""
         warnings.warn(
             "OrderedVectorToSquareGrid is deprecated, use OrderedVectorToRectangularGrid instead",
-            DeprecationWarning
+            DeprecationWarning,
         )
         super().__init__(edge_length, edge_length)
 

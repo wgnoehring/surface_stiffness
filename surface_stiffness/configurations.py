@@ -11,7 +11,8 @@ from importlib import import_module
 
 # TODO: method to generate Lammps data files
 
-logger = logging.getLogger('surface_stiffness.configurations')
+logger = logging.getLogger("surface_stiffness.configurations")
+
 
 def _read_atoms_from_file(file, format="extxyz"):
     """Read atoms from file and sort by identifier
@@ -124,7 +125,9 @@ class FCCSurface001(Crystal):
 
     def __post_init__(self):
         self.num_atoms_surface = self.num_atoms_edge ** 2
-        self.reshape = OrderedVectorToRectangularGrid(self.num_atoms_edge, self.num_atoms_edge)
+        self.reshape = OrderedVectorToRectangularGrid(
+            self.num_atoms_edge, self.num_atoms_edge
+        )
 
     def calculate_area_per_atom(self):
         """Calculate the mean area per atom from the true edge length."""

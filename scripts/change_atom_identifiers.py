@@ -20,7 +20,8 @@ __copyright__ = "Copyright 2019, Uni Freiburg"
 __license__ = "GNU General Public License"
 __email__ = "wolfram.noehring@imtek.uni-freiburg.de"
 
-logger = logging.getLogger('surface_stiffness.scripts.change_atom_identifiers')
+logger = logging.getLogger("surface_stiffness.scripts.change_atom_identifiers")
+
 
 def main():
     parser = argparse.ArgumentParser()
