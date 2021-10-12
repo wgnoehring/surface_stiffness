@@ -37,12 +37,11 @@ def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
     greens_functions: array-like
         Array with shape :code:`((N*N*3), (N*N*3))`, where each block of shape
         :code:`(3,3)` contains the Greens functions for one atomic site.
-    config: surface_stiffness.configurations.Configuration
-        Configuration of crystal and material, which provides the information
-        of how to reshape a row in greens_functions to obtain an array of shape
-        :code:`(N,N)`, whose components are arranged according to the order of
-        the corresponding sites in space, or the corresponding wavevectors in
-        reciprocal space.
+    reshape: Reshape
+        Provides the information of how to reshape a row in greens_functions
+        to obtain an array of shape :code:`(N,N)`, whose components are
+        arranged according to the order of the corresponding sites in
+        space, or the corresponding wavevectors in reciprocal space.
     num_stddev: int
         Number of standard deviations to add/subtract from the average Greens
         functions to obtain a confidence interval.
@@ -70,7 +69,7 @@ def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
         )
     (mean_both,) = load_atomistic_stiffness(
         greens_functions,
-        reshape=config.crystal.reshape,
+        reshape=reshape,
         statistics=[np.average],
         part="both",
         indexing="matrix",
@@ -81,7 +80,7 @@ def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
     if num_stddev > 0:
         (std_both,) = load_atomistic_stiffness(
             greens_functions,
-            reshape=config.crystal.reshape,
+            reshape=reshape,
             statistics=[np.std],
             part="both",
             indexing="matrix",
@@ -89,7 +88,7 @@ def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
         )
         mean_real, std_real = load_atomistic_stiffness(
             greens_functions,
-            reshape=config.crystal.reshape,
+            reshape=reshape,
             statistics=[np.average, np.std],
             part="real",
             indexing="matrix",
@@ -97,7 +96,7 @@ def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
         )
         mean_imag, std_imag = load_atomistic_stiffness(
             greens_functions,
-            reshape=config.crystal.reshape,
+            reshape=reshape,
             statistics=[np.average, np.std],
             part="imag",
             indexing="matrix",

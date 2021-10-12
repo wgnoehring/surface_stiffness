@@ -3,6 +3,7 @@
 """Functions for working with matrices."""
 import sys
 import logging
+import warnings
 from abc import ABC
 import numpy as np
 from numpy import ma
@@ -512,6 +513,10 @@ class OrderedVectorToRectangularGrid(Reshape):
 class OrderedVectorToSquareGrid(OrderedVectorToRectangularGrid):
     def __init__(self, edge_length):
         """Transform between an ordered vector and a square grid."""
+        warnings.warn(
+            "OrderedVectorToSquareGrid is deprecated, use OrderedVectorToRectangularGrid instead",
+            DeprecationWarning
+        )
         super().__init__(edge_length, edge_length)
 
 

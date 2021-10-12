@@ -4,13 +4,7 @@ from textwrap import dedent
 import argparse
 import logging
 import numpy as np
-from surface_stiffness import configurations
-from surface_stiffness.matrix import (
-    fourier_transform_symmetric_square_block_matrix,
-    calculate_blockwise_inverse,
-    load_atomistic_stiffness,
-    invert_grid_of_flattened_matrices,
-)
+from surface_stiffness.matrix import OrderedVectorToRectangularGrid
 from surface_stiffness.stiffness import calculate_stiffness
 
 logger = logging.getLogger('surface_stiffness.scripts.calculate_stiffness_from_greens_function_average')
@@ -23,16 +17,15 @@ def main():
         num_stddev = args.num_stddev
     # The average stiffness will be calculated in any case.
     greens_functions = np.load(args.greens_functions)
-    degrees_of_freedom = 3
-    num_atoms_edge = int(np.sqrt(greens_functions.shape[0] // degrees_of_freedom))
-    # The number of subsurface planes and the surface
-    # width are irrelevant here and can be set to 1
-    config = configurations.Configuration(
-        material=None,
-        crystal=configurations.FCCSurface001(num_atoms_edge, 1, 1.0),
-    )
+    if not args.grid_shape:
+        degrees_of_freedom = 3
+        num_atoms_edge = int(np.sqrt(greens_functions.shape[0] // degrees_of_freedom))
+        reshape = OrderedVectorToRectangularGrid(num_atoms_edge, num_atoms_edge)
+    else:
+        logger.info(f"Setting up reshape for grid size {args.grid_shape}")
+        reshape = OrderedVectorToRectangularGrid(*args.grid_shape)
     mean_stiff, upper_stiff, lower_stiff = calculate_stiffness(
-        greens_functions, config, num_stddev=num_stddev, mask=None
+        greens_functions, reshape, num_stddev=num_stddev, mask=None
     )
     filename = f"./stiffness_from_average_of_greens_functions.npy"
     logger.info(f"...writing average stiffnesses to {filename}")
@@ -61,7 +54,7 @@ def main():
                 f"{num_masked} masked values --> {config.crystal.num_atoms_surface-num_masked} not masked"
             )
             mean_stiff, upper_stiff, lower_stiff = calculate_stiffness(
-                greens_functions, config, num_stddev=num_stddev, mask=mask
+                greens_functions, reshape, num_stddev=num_stddev, mask=mask
             )
             filename = f"./stiffness_from_average_of_greens_functions_{sutf}_atoms.npy"
             logger.info(f"...writing average stiffnesses of {sutf} atoms to {filename}")
@@ -126,6 +119,22 @@ def parse_command_line():
             https://wiki.fysik.dtu.dk/ase/ase/io/io.html
             """
             )
+        ),
+    )
+    parser.add_argument(
+        "-g",
+        "--grid_shape",
+        type=int,
+        nargs=2,
+        help=dedent(
+                """\
+            Number of sites along the x- and y-directions. 
+            If this option is not set, it will be assumed 
+            that the grid is square, and the dimensions 
+            will be inferred from the shape of the greens
+            functions array.
+            """
+            
         ),
     )
     # Arguments for particular confidence interval types
