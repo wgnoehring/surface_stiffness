@@ -5,7 +5,7 @@ import numpy as np
 from .matrix import load_atomistic_stiffness, invert_grid_of_flattened_matrices
 
 
-def calculate_stiffness(greens_functions, config, num_stddev=0, mask=None):
+def calculate_stiffness(greens_functions, reshape, num_stddev=0, mask=None):
     r"""Calculate stiffness by inversion of elastic Greens functions
 
     We assume that the atoms are arranged in a two-dimensional simple cubic
