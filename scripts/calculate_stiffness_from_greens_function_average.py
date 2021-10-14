@@ -4,6 +4,7 @@ from textwrap import dedent
 import argparse
 import logging
 import numpy as np
+from surface_stiffness.configurations import Configuration, FCCSurface011
 from surface_stiffness.matrix import OrderedVectorToRectangularGrid
 from surface_stiffness.stiffness import calculate_stiffness
 
@@ -43,6 +44,14 @@ def main():
         np.save(filename, np.ma.filled(lower_stiff))
 
     if args.element_wise is not None:
+        if not args.grid_shape:
+            grid_shape = (num_atoms_edge, num_atoms_edge)
+        else:
+            grid_shape = args.grid_shape
+        config = Configuration(
+            material=None,
+            crystal=FCCSurface011(grid_shape[0], grid_shape[1], 1, 1.0, 1.0),
+        )
         mask_for_symbol, symbols = config.crystal.create_symbol_masks_for_surface(
             args.element_wise,
             return_symbols=True,
