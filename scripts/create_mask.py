@@ -11,7 +11,7 @@ from surface_stiffness.configurations import FCCSurface001
 def main():
     args = parse_command_line()
     symbols = read_symbols_from_xyz(
-        args.xyz_file, num_atoms=args.num_atoms_edge ** 2, check_sorted=True
+        args.xyz_file, num_atoms=args.num_atoms, check_sorted=True
     )
     mask = np.array([s == args.symbol for s in symbols], dtype=bool)
     np.save(args.output_file, mask)
@@ -37,11 +37,10 @@ def parse_command_line():
     )
     parser.add_argument("xyz_file", help="XYZ configuration file with atomic symbols")
     parser.add_argument(
-        "num_atoms_edge",
+        "num_atoms",
         type=int,
         help=(
-            "Number of atoms along the edge of the configuration. "
-            + "num_atoms_edge**2 atoms will be read from the file."
+            "Number of atoms that will be read from the file"
         ),
     )
     parser.add_argument("symbol", help="Atomic symbol to search for.")
