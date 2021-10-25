@@ -275,7 +275,7 @@ def generate_wavevectors(nrows, ncols):
     # In the stiffness array, the y-coordinate varies with row
     # number and the x-coordinate varies with column number. Thus,
     # we have to define a meshgrid with cartesian (xy) indexing.
-    x_freq = np.fft.fftshift(np.fft.fftfreq(ncols)) * np.pi
-    y_freq = np.fft.fftshift(np.fft.fftfreq(nrows)) * np.pi
+    x_freq = np.fft.fftshift(np.fft.fftfreq(ncols)) * 2.0 * np.pi
+    y_freq = np.fft.fftshift(np.fft.fftfreq(nrows)) * 2.0 * np.pi
     xx, yy = np.meshgrid(x_freq, y_freq, sparse=False, indexing="xy")
     return xx, yy
