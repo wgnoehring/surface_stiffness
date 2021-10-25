@@ -251,7 +251,7 @@ def extract_path_rect(values, x_grid, y_grid, fraction=1.0, true_edge_lengths=No
     return path
 
 
-def generate_wavevectors(nrows, ncols):
+def generate_wavevectors(nrows, ncols, sample_spacing=(1.0, 1.0)):
     """Generate wavevectors.
 
     Consider a discretization of the Brillouin zone into :code:`nrows`
@@ -264,6 +264,8 @@ def generate_wavevectors(nrows, ncols):
         Number of pixel rows (pixels along x)
     ncols : int
         Number of columns
+    sample_spacing: array-like
+        x- and y-distance between points in real sapce
 
     Returns
     -------
@@ -275,7 +277,7 @@ def generate_wavevectors(nrows, ncols):
     # In the stiffness array, the y-coordinate varies with row
     # number and the x-coordinate varies with column number. Thus,
     # we have to define a meshgrid with cartesian (xy) indexing.
-    x_freq = np.fft.fftshift(np.fft.fftfreq(ncols)) * 2.0 * np.pi
-    y_freq = np.fft.fftshift(np.fft.fftfreq(nrows)) * 2.0 * np.pi
+    x_freq = np.fft.fftshift(np.fft.fftfreq(ncols, d=sample_spacing[0])) * 2.0 * np.pi 
+    y_freq = np.fft.fftshift(np.fft.fftfreq(nrows, d=sample_spacing[1])) * 2.0 * np.pi 
     xx, yy = np.meshgrid(x_freq, y_freq, sparse=False, indexing="xy")
     return xx, yy
