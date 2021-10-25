@@ -1,0 +1,38 @@
+Bootstrap: localimage
+From: petsc.sif
+
+%post
+    # Python dependencies for matscipy
+    python3 -m pip install --upgrade pip
+    python3 -m pip install --upgrade pytest
+    python3 -m pip install --upgrade numpy 
+    python3 -m pip install --upgrade scipy
+    python3 -m pip install --upgrade mpi4py 
+    python3 -m pip install NuMPI
+    python3 -m pip install ase
+    python3 -m pip install pathlib
+    export INSTALL_DIR=/opt 
+
+    git clone https://github.com/libAtoms/matscipy.git $INSTALL_DIR/matscipy
+    cd $INSTALL_DIR/matscipy
+    python3 setup.py build
+    python3 setup.py install 
+
+    cd ${INSTALL_DIR}
+    git clone https://github.com/wgnoehring/surface_stiffness ${INSTALL_DIR}/surface_stiffness
+    cd ${INSTALL_DIR}/surface_stiffness
+    git checkout surface_stiffness-0.3.6
+    python3 setup.py build
+    python3 setup.py install 
+
+    # Compile the petsc code for Hessian matrix inversion
+    cd $INSTALL_DIR
+    git clone https://github.com/griessej/Greens_Functions
+    cd ${INSTALL_DIR}/Greens_Functions/src/compute_inverse_mumpsGetInverse_sparse_rhs_Cholesky_with_prealloc
+    chmod +x ${INSTALL_DIR}/Greens_Functions/python/*.py
+    PETSC_DIR=$PETSC_DIR PETSC_ARCH=$PETSC_ARCH make compute_inverse_cholesky
+
+%environment
+    export PATH="${PATH}:/opt/Greens_Functions/src/compute_inverse_mumpsGetInverse_sparse_rhs_Cholesky_with_prealloc:/opt/Greens_Functions/python"
+
+%runscript 
