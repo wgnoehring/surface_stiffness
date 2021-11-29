@@ -32,7 +32,7 @@ voigt_index_for_matrix_indices = {
 }
 """Indices in Voigt notation for matrix indices as key-value pairs."""
 
-label_for_component = {0: "xx", 1: "yy", 2: "zz", 3: "yz", 4: "xz", 5: "xy"}
+label_for_component = {0: "11", 1: "22", 2: "33", 3: "23", 4: "13", 5: "12"}
 """Subscript strings for the indices of a vector in Voigt notation as key-value pairs"""
 
 logger = logging.getLogger("surface_stiffness.matrix")
